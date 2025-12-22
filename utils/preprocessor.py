@@ -42,7 +42,7 @@ class UltrasoundPreprocessor:
         return voltage_data - np.mean(voltage_data)
 
     def apply_bandpass_filter(self, voltage_data: np.ndarray,
-                            low_freq: float = 1e5, high_freq: float = 10e6) -> np.ndarray:
+                            low_freq: float = 1e5, high_freq: float = 4e5) -> np.ndarray:
         """대역 통과 필터 적용"""
         if len(voltage_data) < 10:
             return voltage_data
@@ -140,7 +140,7 @@ class UltrasoundPreprocessor:
             return np.array([]), {}
 
         peaks, properties = signal.find_peaks(voltage_data,
-                                            height=height,
+                                            height=height or np.mean(np.abs(voltage_data)),
                                             distance=distance)
 
         peak_info = {
@@ -252,3 +252,39 @@ class UltrasoundPreprocessor:
             return 0
 
         return -np.sum(hist * np.log2(hist))
+
+def main():
+    """메인 함수 - 전처리 데모"""
+    print("초음파 신호 전처리 모듈 테스트")
+
+    # 샘플 데이터 생성
+    sample_rate = 1e6
+    t = np.linspace(0, 1e-5, 1000)  # 10μs
+    frequency = 5e6  # 5MHz
+    sample_signal = np.sin(2 * np.pi * frequency * t) + 0.1 * np.random.randn(len(t))
+
+    # 전처리기 초기화
+    preprocessor = UltrasoundPreprocessor(sample_rate)
+
+    # DC 오프셋 제거
+    dc_removed = preprocessor.remove_dc_offset(sample_signal)
+
+    # 밴드패스 필터 적용
+    filtered = preprocessor.apply_bandpass_filter(dc_removed, low_freq=1e5, high_freq=4e5)
+
+    # 정규화
+    normalized = preprocessor.normalize_signal(filtered)
+
+    # 특성 추출
+    features = preprocessor.extract_all_features(normalized)
+
+    print(f"샘플 신호 길이: {len(sample_signal)}")
+    print(f"DC 제거 후 평균: {np.mean(dc_removed):.6f}")
+    print(f"필터 적용 후 RMS: {np.sqrt(np.mean(filtered**2)):.6f}")
+    print(f"정규화 후 평균: {np.mean(normalized):.6f}")
+    print(f"추출된 특성 수: {len(features)}")
+
+    print("전처리 모듈 테스트 완료!")
+
+if __name__ == "__main__":
+    main()
