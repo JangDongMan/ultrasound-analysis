@@ -24,7 +24,7 @@ segmentation-models-pytorch>=0.3.0
 
 # 신호 처리
 scipy>=1.7.0
-pywt>=1.1.0
+# pywt>=1.1.0,<1.5.0  # Python 3.10 호환 이슈로 일시 생략
 seaborn>=0.11.0
 plotly>=5.0.0
 
@@ -38,4 +38,4 @@ wandb>=0.12.0  # 선택적: 실험 추적
 
 # GPU 최적화
 tensorflow>=2.8.0  # 선택적: TensorFlow 지원
-cudatoolkit>=11.0  # 선택적: CUDA 지원
+# cudatoolkit>=11.0  # 선택적: CUDA 지원 (pip으로 설치 불가)
