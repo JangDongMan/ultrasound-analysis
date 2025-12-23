@@ -293,18 +293,48 @@ def visualize_patient_file(result: Dict, save_path: str):
 
         ax3.legend(loc='upper right', fontsize=8)
 
-    # 주파수 스펙트럼
-    from scipy import signal
-    if len(filtered_data) > 64:
-        sample_rate = 100e6  # 100 MHz
-        freqs, psd = signal.welch(filtered_data, fs=sample_rate, nperseg=256)
-        freqs_mhz = freqs / 1e6
-        ax4.semilogy(freqs_mhz, psd, 'b-')
-        ax4.set_title('Frequency Spectrum')
-        ax4.set_xlabel('Frequency (MHz)')
-        ax4.set_ylabel('Power Spectral Density')
+    # 전체 신호 상세 보기 (첫 번째 피크 근처 확대)
+    if len(peaks) >= 2:
+        # 첫 두 피크 사이 영역 확대
+        start_idx = max(0, peaks[0] - 50)
+        end_idx = min(len(skin_analysis_time), peaks[1] + 50)
+
+        zoomed_time = skin_analysis_time[start_idx:end_idx]
+        zoomed_voltage = skin_filtered_data[start_idx:end_idx]
+        zoomed_peaks = peaks[:2] - start_idx
+
+        ax4.plot(zoomed_time, zoomed_voltage, 'b-', linewidth=1.5)
+
+        # 피크 표시
+        peak_times_zoom = skin_analysis_time[peaks[:2]]
+        peak_voltages_zoom = skin_filtered_data[peaks[:2]]
+        ax4.scatter(peak_times_zoom, peak_voltages_zoom, color='red', s=100, zorder=5)
+
+        # 두께 표시 (첫 두 피크 사이)
+        if len(result['layers']) >= 2:
+            thickness_1 = result['layers'][0]['thickness_mm']
+            thickness_2 = result['layers'][1]['thickness_mm']
+
+            mid_time = (peak_times_zoom[0] + peak_times_zoom[1]) / 2
+            mid_voltage = (peak_voltages_zoom[0] + peak_voltages_zoom[1]) / 2
+
+            ax4.annotate(f'Layer 1: {thickness_1:.3f}mm\nLayer 2: {thickness_2:.3f}mm',
+                        (mid_time, mid_voltage), xytext=(0, 20),
+                        textcoords='offset points', ha='center',
+                        bbox=dict(boxstyle='round,pad=0.3', facecolor='lightgreen', alpha=0.7),
+                        fontsize=8)
+
+        ax4.set_title('Zoomed View - First Two Layers')
+        ax4.set_xlabel('Time (μs)')
+        ax4.set_ylabel('Voltage (V)')
         ax4.grid(True, alpha=0.3)
-        ax4.set_xlim(0, 50)
+    else:
+        # 피크가 2개 미만이면 전체 필터링된 신호 표시
+        ax4.plot(time_data[:1000], filtered_data[:1000], 'b-', linewidth=1)
+        ax4.set_title('Filtered Signal Detail')
+        ax4.set_xlabel('Time (μs)')
+        ax4.set_ylabel('Voltage (V)')
+        ax4.grid(True, alpha=0.3)
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
