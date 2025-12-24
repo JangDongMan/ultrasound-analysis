@@ -170,6 +170,7 @@ def analyze_single_file(file_path: str, patient_id: str, position: int) -> Dict:
             'num_layers': len(layers),
             'layers': layers,
             'time_data': analysis_time,
+            'voltage_data': analysis_voltage,  # 원본 전압 데이터 추가
             'filtered_data': filtered_data,
             'skin_analysis_time': skin_analysis_time,
             'skin_filtered_data': skin_filtered_data,
@@ -189,6 +190,7 @@ def visualize_patient_file(result: Dict, save_path: str):
 
     # 기본 데이터 추출
     time_data = result['time_data']
+    voltage_data = result['voltage_data']  # 원본 전압 데이터
     filtered_data = result['filtered_data']
     skin_analysis_time = result['skin_analysis_time']
     skin_filtered_data = result['skin_filtered_data']
@@ -293,48 +295,31 @@ def visualize_patient_file(result: Dict, save_path: str):
 
         ax3.legend(loc='upper right', fontsize=8)
 
-    # 전체 신호 상세 보기 (첫 번째 피크 근처 확대)
-    if len(peaks) >= 2:
-        # 첫 두 피크 사이 영역 확대
-        start_idx = max(0, peaks[0] - 50)
-        end_idx = min(len(skin_analysis_time), peaks[1] + 50)
+    # 4. 전체 신호 원본 데이터 (필터링 전, 스무스하지 않은 신호)
+    ax4.plot(time_data, voltage_data, 'b-', linewidth=0.5, alpha=0.7)
 
-        zoomed_time = skin_analysis_time[start_idx:end_idx]
-        zoomed_voltage = skin_filtered_data[start_idx:end_idx]
-        zoomed_peaks = peaks[:2] - start_idx
+    # 5mm 제한선 표시
+    ax4.axvline(x=skin_start_time, color='purple', linestyle='--', alpha=0.7, linewidth=1.5,
+               label=f'Skin Start ({skin_start_time:.1f}μs)')
+    ax4.axvline(x=skin_end_time, color='red', linestyle='--', alpha=0.7, linewidth=1.5,
+               label=f'5mm Limit ({skin_end_time:.1f}μs)')
 
-        ax4.plot(zoomed_time, zoomed_voltage, 'b-', linewidth=1.5)
+    # 피크 위치 표시 (필터링된 데이터에서 찾은 피크를 원본에 표시)
+    if len(peaks) > 0:
+        peaks_time_full = skin_analysis_time[peaks]
+        # 원본 데이터에서 해당 시간의 전압값 찾기
+        peaks_voltage_original = []
+        for peak_time in peaks_time_full:
+            idx = np.argmin(np.abs(time_data - peak_time))
+            peaks_voltage_original.append(voltage_data[idx])
+        ax4.scatter(peaks_time_full, peaks_voltage_original, color='red', s=50, zorder=5,
+                   label=f'{len(peaks)} Boundaries')
 
-        # 피크 표시
-        peak_times_zoom = skin_analysis_time[peaks[:2]]
-        peak_voltages_zoom = skin_filtered_data[peaks[:2]]
-        ax4.scatter(peak_times_zoom, peak_voltages_zoom, color='red', s=100, zorder=5)
-
-        # 두께 표시 (첫 두 피크 사이)
-        if len(result['layers']) >= 2:
-            thickness_1 = result['layers'][0]['thickness_mm']
-            thickness_2 = result['layers'][1]['thickness_mm']
-
-            mid_time = (peak_times_zoom[0] + peak_times_zoom[1]) / 2
-            mid_voltage = (peak_voltages_zoom[0] + peak_voltages_zoom[1]) / 2
-
-            ax4.annotate(f'Layer 1: {thickness_1:.3f}mm\nLayer 2: {thickness_2:.3f}mm',
-                        (mid_time, mid_voltage), xytext=(0, 20),
-                        textcoords='offset points', ha='center',
-                        bbox=dict(boxstyle='round,pad=0.3', facecolor='lightgreen', alpha=0.7),
-                        fontsize=8)
-
-        ax4.set_title('Zoomed View - First Two Layers')
-        ax4.set_xlabel('Time (μs)')
-        ax4.set_ylabel('Voltage (V)')
-        ax4.grid(True, alpha=0.3)
-    else:
-        # 피크가 2개 미만이면 전체 필터링된 신호 표시
-        ax4.plot(time_data[:1000], filtered_data[:1000], 'b-', linewidth=1)
-        ax4.set_title('Filtered Signal Detail')
-        ax4.set_xlabel('Time (μs)')
-        ax4.set_ylabel('Voltage (V)')
-        ax4.grid(True, alpha=0.3)
+    ax4.set_title('Full Signal (Raw Data) with 5mm Analysis Window')
+    ax4.set_xlabel('Time (μs)')
+    ax4.set_ylabel('Voltage (V)')
+    ax4.grid(True, alpha=0.3)
+    ax4.legend(loc='upper right', fontsize=7)
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
