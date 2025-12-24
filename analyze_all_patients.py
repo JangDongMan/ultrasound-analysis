@@ -48,16 +48,35 @@ def analyze_single_file(file_path: str, patient_id: str, position: int) -> Dict:
         # 시간 데이터를 μs로 변환
         time_us = time_data * 1e6
 
-        # 펄스 시작점 찾기
-        threshold = np.std(voltage_data) * 3
-        pulse_start_indices = np.where(np.abs(voltage_data) > threshold)[0]
+        # 펄스 시작점 찾기 (개선된 방법)
+        # 1단계: 초기 임계값으로 후보 찾기
+        std_val = np.std(voltage_data)
+        mean_val = np.mean(voltage_data)
 
-        if len(pulse_start_indices) == 0:
+        # 평균에서 크게 벗어난 첫 번째 지점 찾기
+        threshold = mean_val + std_val * 2
+        pulse_candidates = np.where(np.abs(voltage_data) > threshold)[0]
+
+        if len(pulse_candidates) == 0:
+            # 임계값을 낮춰서 재시도
+            threshold = mean_val + std_val * 1.5
+            pulse_candidates = np.where(np.abs(voltage_data) > threshold)[0]
+
+        if len(pulse_candidates) == 0:
             return None
 
+        # 2단계: 첫 번째 후보 근처에서 최대 피크 찾기
+        # 첫 후보 주변 ±50 샘플 범위에서 절댓값 최대 지점 찾기
+        first_candidate = pulse_candidates[0]
+        search_start = max(0, first_candidate - 50)
+        search_end = min(len(voltage_data), first_candidate + 100)
+
+        search_window = voltage_data[search_start:search_end]
+        max_abs_idx = search_start + np.argmax(np.abs(search_window))
+
         # 펄스 시작점 이후 데이터
-        analysis_time = time_us[pulse_start_indices[0]:] - time_us[pulse_start_indices[0]]
-        analysis_voltage = voltage_data[pulse_start_indices[0]:]
+        analysis_time = time_us[max_abs_idx:] - time_us[max_abs_idx]
+        analysis_voltage = voltage_data[max_abs_idx:]
 
         # 전처리
         preprocessor = UltrasoundPreprocessor(sample_rate=sample_rate)
