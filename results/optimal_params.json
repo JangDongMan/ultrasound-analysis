@@ -1,0 +1,6 @@
+{
+  "pulse_threshold": 2.0,
+  "prominence_factor": 0.6,
+  "distance": 5,
+  "height_factor": 0.5
+}

@@ -48,55 +48,49 @@ def analyze_single_file(file_path: str, patient_id: str, position: int) -> Dict:
         # 시간 데이터를 μs로 변환
         time_us = time_data * 1e6
 
-        # 펄스 시작점 찾기 (개선된 방법)
-        # 1단계: 초기 임계값으로 후보 찾기
-        std_val = np.std(voltage_data)
-        mean_val = np.mean(voltage_data)
+        # 펄스 시작점 찾기 (첫 번째 큰 전압 기반 - 2V 이상)
+        # 표피 시작점은 보통 2V 이상의 큰 신호에서 시작
+        abs_voltage = np.abs(voltage_data)
+        max_voltage = np.max(abs_voltage)
 
-        # 평균에서 크게 벗어난 첫 번째 지점 찾기
-        threshold = mean_val + std_val * 2
-        pulse_candidates = np.where(np.abs(voltage_data) > threshold)[0]
+        # 임계값 설정: 2V를 기본값으로, 최대값이 2V보다 작으면 70%로 조정
+        if max_voltage >= 2.0:
+            threshold = 2.0  # 2V 이상의 첫 지점
+        else:
+            threshold = max_voltage * 0.7  # 최대값의 70%
 
-        if len(pulse_candidates) == 0:
-            # 임계값을 낮춰서 재시도
-            threshold = mean_val + std_val * 1.5
-            pulse_candidates = np.where(np.abs(voltage_data) > threshold)[0]
+        # 임계값을 넘는 첫 번째 지점 찾기
+        threshold_indices = np.where(abs_voltage > threshold)[0]
 
-        if len(pulse_candidates) == 0:
-            return None
+        if len(threshold_indices) == 0:
+            # 임계값을 넘는 지점이 없으면 최대값의 50%로 재시도
+            threshold = max_voltage * 0.5
+            threshold_indices = np.where(abs_voltage > threshold)[0]
 
-        # 2단계: 첫 번째 후보 근처에서 최대 피크 찾기
-        # 첫 후보 주변 ±50 샘플 범위에서 절댓값 최대 지점 찾기
-        first_candidate = pulse_candidates[0]
-        search_start = max(0, first_candidate - 50)
-        search_end = min(len(voltage_data), first_candidate + 100)
-
-        search_window = voltage_data[search_start:search_end]
-        max_abs_idx = search_start + np.argmax(np.abs(search_window))
+        if len(threshold_indices) == 0:
+            # 그래도 없으면 최대값 위치 사용
+            pulse_start_idx = np.argmax(abs_voltage)
+        else:
+            # 첫 번째 임계값 초과 지점 사용
+            pulse_start_idx = threshold_indices[0]
 
         # 펄스 시작점 이후 데이터
-        analysis_time = time_us[max_abs_idx:] - time_us[max_abs_idx]
-        analysis_voltage = voltage_data[max_abs_idx:]
+        analysis_time = time_us[pulse_start_idx:] - time_us[pulse_start_idx]
+        analysis_voltage = voltage_data[pulse_start_idx:]
 
         # 전처리
         preprocessor = UltrasoundPreprocessor(sample_rate=sample_rate)
         filtered_data = preprocessor.apply_bandpass_filter(analysis_voltage)
 
-        # 피부층 분석 영역 설정 (5mm 이내)
+        # 피부층 분석 영역 설정 (6mm 이내)
         speed_of_sound = 1540  # m/s
-        max_distance_mm = 5.0  # mm
+        max_distance_mm = 6.0  # mm
         max_time_us = (max_distance_mm / 1000) * 2 / speed_of_sound * 1e6  # μs
 
-        # 분석 시작점: 펄스 시작 후 첫 피크 찾기
-        initial_threshold = np.std(filtered_data) * 2
-        initial_peaks = np.where(np.abs(filtered_data) > initial_threshold)[0]
-
-        if len(initial_peaks) > 0:
-            skin_start_idx = initial_peaks[0]
-            skin_start_time = analysis_time[skin_start_idx]
-        else:
-            skin_start_idx = 0
-            skin_start_time = 0
+        # 분석 시작점: 펄스 시작점이 이미 표피 시작점이므로 0부터 시작
+        # 펄스 시작점 검출에서 2V 이상을 사용했으므로 이미 정확함
+        skin_start_idx = 0
+        skin_start_time = 0
 
         # 5mm 이내 데이터만 추출
         skin_end_time = skin_start_time + max_time_us
@@ -106,86 +100,122 @@ def analyze_single_file(file_path: str, patient_id: str, position: int) -> Dict:
         skin_analysis_time = analysis_time[skin_start_idx:skin_end_idx]
         skin_filtered_data = filtered_data[skin_start_idx:skin_end_idx]
 
-        # 피크 검출 (최대 4개 층 경계)
+        # 포지션 검출 (2개: 진피층 시작, 근막층 시작)
         skin_filtered_abs = np.abs(skin_filtered_data)
         std_val = np.std(skin_filtered_abs)
         mean_val = np.mean(skin_filtered_abs)
 
-        # 피크 검출
+        # 피크 검출 - 주요 경계를 찾기 위해 강한 피크만 검출
         all_peaks, properties = scipy_find_peaks(skin_filtered_abs,
-                                                 prominence=None,
-                                                 distance=5,
-                                                 height=mean_val * 0.1)
+                                                 prominence=std_val * 0.5,
+                                                 distance=10,
+                                                 height=std_val * 0.7)
 
-        if len(all_peaks) < 4:
+        # 피크가 충분하지 않으면 낮은 임계값으로 재시도
+        if len(all_peaks) < 2:
             all_peaks2, properties2 = scipy_find_peaks(skin_filtered_abs,
+                                                       prominence=std_val * 0.3,
                                                        distance=5,
-                                                       height=mean_val * 0.05)
+                                                       height=std_val * 0.5)
             if len(all_peaks2) >= len(all_peaks):
                 all_peaks = all_peaks2
                 properties = properties2
 
-        # 최대 4개 피크만 선택
-        if len(all_peaks) > 4:
+        # 그래도 부족하면 더 낮은 임계값
+        if len(all_peaks) < 2:
+            all_peaks3, properties3 = scipy_find_peaks(skin_filtered_abs,
+                                                       prominence=std_val * 0.2,
+                                                       distance=5,
+                                                       height=mean_val * 0.1)
+            if len(all_peaks3) >= len(all_peaks):
+                all_peaks = all_peaks3
+                properties = properties3
+
+        # 정확히 2개 포지션만 선택 (가장 큰 2개 피크)
+        if len(all_peaks) >= 2:
             if 'peak_heights' in properties:
                 heights = properties['peak_heights']
                 sorted_indices = np.argsort(heights)[::-1]
-                top_peaks_indices = sorted_indices[:4]
-                peaks = np.sort(all_peaks[top_peaks_indices])
+                top_2_indices = sorted_indices[:2]
+                # 시간순으로 정렬 (첫 번째가 진피층, 두 번째가 근막층)
+                positions = np.sort(all_peaks[top_2_indices])
             else:
-                peaks = all_peaks[:4]
+                positions = all_peaks[:2]
+        elif len(all_peaks) == 1:
+            # 피크가 1개만 있으면 진피층 시작으로 간주
+            positions = all_peaks
         else:
-            peaks = all_peaks
+            positions = np.array([])
 
-        # 피크를 실제 시간축으로 변환
-        peaks_time = skin_analysis_time[peaks]
+        # 포지션을 실제 시간축으로 변환
+        positions_time = skin_analysis_time[positions]
 
-        # 층 정보 계산
+        # 층 정보 계산 (3개 층: 표피, 진피, 근막)
         layers = []
 
-        if len(peaks) > 0:
-            # Layer 1: 표면부터 첫 번째 경계까지
-            first_depth = (peaks_time[0] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
+        if len(positions) >= 2:
+            # Layer 1: Epidermis (0 → Position 1: Dermis Start)
+            epidermis_depth = (positions_time[0] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
             layers.append({
                 'layer_num': 1,
-                'thickness_mm': first_depth,
+                'layer_name': 'Epidermis',
+                'thickness_mm': epidermis_depth,
                 'depth_start_mm': 0.0,
-                'depth_end_mm': first_depth
+                'depth_end_mm': epidermis_depth
             })
 
-            # 중간 층들
-            for i in range(len(peaks) - 1):
-                time_diff = peaks_time[i+1] - peaks_time[i]
-                layer_thickness = (time_diff * 1e-6 * speed_of_sound / 2) * 1000
+            # Layer 2: Dermis (Position 1 → Position 2: Fascia Start)
+            dermis_start = epidermis_depth
+            dermis_end = (positions_time[1] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
+            dermis_thickness = dermis_end - dermis_start
+            layers.append({
+                'layer_num': 2,
+                'layer_name': 'Dermis',
+                'thickness_mm': dermis_thickness,
+                'depth_start_mm': dermis_start,
+                'depth_end_mm': dermis_end
+            })
 
-                depth_start = (peaks_time[i] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
-                depth_end = (peaks_time[i+1] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
+            # Layer 3: Fascia (Position 2 → End)
+            fascia_start = dermis_end
+            fascia_end = max_distance_mm
+            fascia_thickness = fascia_end - fascia_start
+            layers.append({
+                'layer_num': 3,
+                'layer_name': 'Fascia',
+                'thickness_mm': fascia_thickness,
+                'depth_start_mm': fascia_start,
+                'depth_end_mm': fascia_end
+            })
 
-                layers.append({
-                    'layer_num': i + 2,
-                    'thickness_mm': layer_thickness,
-                    'depth_start_mm': depth_start,
-                    'depth_end_mm': depth_end
-                })
+        elif len(positions) == 1:
+            # Only 1 position detected (Dermis start only)
+            epidermis_depth = (positions_time[0] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
+            layers.append({
+                'layer_num': 1,
+                'layer_name': 'Epidermis',
+                'thickness_mm': epidermis_depth,
+                'depth_start_mm': 0.0,
+                'depth_end_mm': epidermis_depth
+            })
 
-            # 마지막 층 (마지막 피크부터 5mm 끝까지 또는 4개 제한)
-            if len(peaks) < 4 and peaks_time[-1] < skin_end_time:
-                last_depth_start = (peaks_time[-1] - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
-                last_depth_end = max_distance_mm
-                last_thickness = last_depth_end - last_depth_start
-
-                layers.append({
-                    'layer_num': len(peaks) + 1,
-                    'thickness_mm': last_thickness,
-                    'depth_start_mm': last_depth_start,
-                    'depth_end_mm': last_depth_end
-                })
+            # Remaining as Dermis+Fascia combined
+            remaining_start = epidermis_depth
+            remaining_end = max_distance_mm
+            remaining_thickness = remaining_end - remaining_start
+            layers.append({
+                'layer_num': 2,
+                'layer_name': 'Dermis+Fascia',
+                'thickness_mm': remaining_thickness,
+                'depth_start_mm': remaining_start,
+                'depth_end_mm': remaining_end
+            })
 
         return {
             'patient_id': patient_id,
             'position': position,
             'file_path': file_path,
-            'num_boundaries': len(peaks),
+            'num_positions': len(positions),
             'num_layers': len(layers),
             'layers': layers,
             'time_data': analysis_time,
@@ -193,7 +223,7 @@ def analyze_single_file(file_path: str, patient_id: str, position: int) -> Dict:
             'filtered_data': filtered_data,
             'skin_analysis_time': skin_analysis_time,
             'skin_filtered_data': skin_filtered_data,
-            'peaks': peaks,
+            'positions': positions,
             'skin_start_time': skin_start_time,
             'skin_end_time': skin_end_time
         }
@@ -213,7 +243,7 @@ def visualize_patient_file(result: Dict, save_path: str):
     filtered_data = result['filtered_data']
     skin_analysis_time = result['skin_analysis_time']
     skin_filtered_data = result['skin_filtered_data']
-    peaks = result['peaks']
+    positions = result['positions']
     skin_start_time = result['skin_start_time']
     skin_end_time = result['skin_end_time']
 
@@ -221,7 +251,7 @@ def visualize_patient_file(result: Dict, save_path: str):
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
 
     speed_of_sound = 1540
-    max_distance_mm = 5.0
+    max_distance_mm = 6.0
 
     # 전체 신호 (간단히)
     ax1.plot(time_data[:1000], filtered_data[:1000], 'b-', linewidth=1)
@@ -242,24 +272,30 @@ def visualize_patient_file(result: Dict, save_path: str):
     ax3.axvline(x=skin_start_time, color='purple', linestyle='--', alpha=0.7,
                label=f'Skin Start ({skin_start_time:.1f}μs)')
     ax3.axvline(x=skin_end_time, color='red', linestyle='--', alpha=0.7,
-               label=f'5mm Limit ({skin_end_time:.1f}μs)')
+               label=f'6mm Limit ({skin_end_time:.1f}μs)')
     ax3.set_title(f'Skin Layer Analysis (0-{max_distance_mm}mm depth)')
     ax3.set_xlabel('Time (μs)')
     ax3.set_ylabel('Voltage (V)')
     ax3.grid(True, alpha=0.3)
 
-    ax3.plot(skin_analysis_time, skin_filtered_data, 'b-', linewidth=2, label='Skin Layer (0-5mm)')
+    ax3.plot(skin_analysis_time, skin_filtered_data, 'b-', linewidth=2, label='Skin Layer (0-6mm)')
 
-    if len(peaks) > 0:
-        peaks_time = skin_analysis_time[peaks]
-        peaks_voltage = skin_filtered_data[peaks]
+    if len(positions) > 0:
+        positions_time = skin_analysis_time[positions]
+        positions_voltage = skin_filtered_data[positions]
 
-        ax3.plot(peaks_time, peaks_voltage, 'ko', markersize=12,
-                markerfacecolor='yellow', markeredgecolor='black', linewidth=2,
-                label=f'Layer Boundaries ({len(peaks)})', zorder=10)
+        ax3.plot(positions_time, positions_voltage, 'ko', markersize=14,
+                markerfacecolor='red', markeredgecolor='black', linewidth=2,
+                label=f'Positions ({len(positions)})', zorder=10)
 
-        # 층 색상
-        layer_colors = ['lightcoral', 'lightskyblue', 'lightgreen', 'lightyellow', 'lightpink']
+        # Layer colors (3 layers: Epidermis, Dermis, Fascia)
+        layer_colors = ['lightcoral', 'lightskyblue', 'lightgreen']
+        layer_color_map = {
+            'Epidermis': 'lightcoral',
+            'Dermis': 'lightskyblue',
+            'Fascia': 'lightgreen',
+            'Dermis+Fascia': 'lightyellow'
+        }
 
         # 계단식 Y 위치
         max_voltage = np.max(skin_filtered_data)
@@ -269,48 +305,65 @@ def visualize_patient_file(result: Dict, save_path: str):
         num_layers = len(result['layers'])
         layer_y_positions = []
         for i in range(num_layers):
-            y_pos = max_voltage - (voltage_range * 0.15) - (i * voltage_range * 0.15)
+            y_pos = max_voltage - (voltage_range * 0.15) - (i * voltage_range * 0.2)
             layer_y_positions.append(y_pos)
 
         # 층 표시
         for idx, layer in enumerate(result['layers']):
-            layer_num = layer['layer_num']
+            layer_name = layer['layer_name']
             thickness = layer['thickness_mm']
+            layer_num = layer['layer_num']
 
-            # 영역 색상
+            # 층 색상
+            color = layer_color_map.get(layer_name, layer_colors[idx % len(layer_colors)])
+
+            # 영역 색상 및 중간 위치
             if layer_num == 1:
-                ax3.axvspan(skin_start_time, peaks_time[0], alpha=0.2, color=layer_colors[0])
-                mid_time = (skin_start_time + peaks_time[0]) / 2
-            elif layer_num <= len(peaks):
-                ax3.axvspan(peaks_time[layer_num-2], peaks_time[layer_num-1],
-                           alpha=0.2, color=layer_colors[(layer_num-1) % len(layer_colors)])
-                mid_time = (peaks_time[layer_num-2] + peaks_time[layer_num-1]) / 2
+                # 표피: 시작 → Position 1
+                if len(positions) > 0:
+                    ax3.axvspan(skin_start_time, positions_time[0], alpha=0.2, color=color)
+                    mid_time = (skin_start_time + positions_time[0]) / 2
+                else:
+                    ax3.axvspan(skin_start_time, skin_end_time, alpha=0.2, color=color)
+                    mid_time = (skin_start_time + skin_end_time) / 2
+            elif layer_num == 2 and len(positions) >= 2:
+                # 진피: Position 1 → Position 2
+                ax3.axvspan(positions_time[0], positions_time[1], alpha=0.2, color=color)
+                mid_time = (positions_time[0] + positions_time[1]) / 2
+            elif layer_num == 2 and len(positions) == 1:
+                # 진피+근막: Position 1 → 끝
+                ax3.axvspan(positions_time[0], skin_end_time, alpha=0.2, color=color)
+                mid_time = (positions_time[0] + skin_end_time) / 2
+            elif layer_num == 3:
+                # 근막: Position 2 → 끝
+                ax3.axvspan(positions_time[1], skin_end_time, alpha=0.2, color=color)
+                mid_time = (positions_time[1] + skin_end_time) / 2
             else:
-                ax3.axvspan(peaks_time[-1], skin_end_time,
-                           alpha=0.2, color=layer_colors[(layer_num-1) % len(layer_colors)])
-                mid_time = (peaks_time[-1] + skin_end_time) / 2
+                mid_time = (skin_start_time + skin_end_time) / 2
 
             # 두께 표시
-            ax3.annotate(f'Layer {layer_num}\n{thickness:.3f}mm',
+            ax3.annotate(f'{layer_name}\n{thickness:.3f}mm',
                        xy=(mid_time, layer_y_positions[idx]),
                        xytext=(0, 0), textcoords='offset points',
                        ha='center', va='center',
-                       bbox=dict(boxstyle='round,pad=0.3',
-                               facecolor=layer_colors[(layer_num-1) % len(layer_colors)],
+                       bbox=dict(boxstyle='round,pad=0.4',
+                               facecolor=color,
                                edgecolor='black', linewidth=1.5, alpha=0.8),
-                       fontsize=9, weight='bold')
+                       fontsize=8, weight='bold')
 
-        # 경계 마커
-        for i, (peak_time, peak_voltage) in enumerate(zip(peaks_time, peaks_voltage)):
-            depth = (peak_time - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
-            ax3.annotate(f'B{i+1}\n{depth:.3f}mm',
-                       xy=(peak_time, peak_voltage),
-                       xytext=(0, 15), textcoords='offset points',
+        # 포지션 마커
+        position_names = ['P1: Dermis Start', 'P2: Fascia Start']
+        for i, (pos_time, pos_voltage) in enumerate(zip(positions_time, positions_voltage)):
+            depth = (pos_time - skin_start_time) * 1e-6 * speed_of_sound / 2 * 1000
+            pos_label = position_names[i] if i < len(position_names) else f'P{i+1}'
+            ax3.annotate(f'{pos_label}\n{depth:.3f}mm',
+                       xy=(pos_time, pos_voltage),
+                       xytext=(0, 20), textcoords='offset points',
                        ha='center', va='bottom',
-                       bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow',
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='yellow',
                                edgecolor='red', linewidth=2, alpha=0.9),
                        fontsize=8, weight='bold',
-                       arrowprops=dict(arrowstyle='->', color='red', lw=1.5))
+                       arrowprops=dict(arrowstyle='->', color='red', lw=2))
 
         ax3.legend(loc='upper right', fontsize=8)
 
@@ -321,20 +374,20 @@ def visualize_patient_file(result: Dict, save_path: str):
     ax4.axvline(x=skin_start_time, color='purple', linestyle='--', alpha=0.7, linewidth=1.5,
                label=f'Skin Start ({skin_start_time:.1f}μs)')
     ax4.axvline(x=skin_end_time, color='red', linestyle='--', alpha=0.7, linewidth=1.5,
-               label=f'5mm Limit ({skin_end_time:.1f}μs)')
+               label=f'6mm Limit ({skin_end_time:.1f}μs)')
 
-    # 피크 위치 표시 (필터링된 데이터에서 찾은 피크를 원본에 표시)
-    if len(peaks) > 0:
-        peaks_time_full = skin_analysis_time[peaks]
+    # 포지션 위치 표시 (필터링된 데이터에서 찾은 포지션을 원본에 표시)
+    if len(positions) > 0:
+        positions_time_full = skin_analysis_time[positions]
         # 원본 데이터에서 해당 시간의 전압값 찾기
-        peaks_voltage_original = []
-        for peak_time in peaks_time_full:
-            idx = np.argmin(np.abs(time_data - peak_time))
-            peaks_voltage_original.append(voltage_data[idx])
-        ax4.scatter(peaks_time_full, peaks_voltage_original, color='red', s=50, zorder=5,
-                   label=f'{len(peaks)} Boundaries')
+        positions_voltage_original = []
+        for pos_time in positions_time_full:
+            idx = np.argmin(np.abs(time_data - pos_time))
+            positions_voltage_original.append(voltage_data[idx])
+        ax4.scatter(positions_time_full, positions_voltage_original, color='red', s=100,
+                   marker='D', zorder=5, label=f'{len(positions)} Positions')
 
-    ax4.set_title('Full Signal (Raw Data) with 5mm Analysis Window')
+    ax4.set_title('Full Signal (Raw Data) with 6mm Analysis Window')
     ax4.set_xlabel('Time (μs)')
     ax4.set_ylabel('Voltage (V)')
     ax4.grid(True, alpha=0.3)
@@ -394,23 +447,24 @@ def main():
                     'Patient_ID': patient_id,
                     'Position': position,
                     'Layer_Number': layer['layer_num'],
+                    'Layer_Name': layer['layer_name'],
                     'Thickness_mm': round(layer['thickness_mm'], 3),
                     'Depth_Start_mm': round(layer['depth_start_mm'], 3),
                     'Depth_End_mm': round(layer['depth_end_mm'], 3),
-                    'Total_Boundaries': result['num_boundaries'],
+                    'Total_Positions': result['num_positions'],
                     'Total_Layers': result['num_layers']
                 })
 
-            print(f"✓ {result['num_layers']} layers detected")
+            print(f"✓ {result['num_positions']} positions, {result['num_layers']} layers detected")
 
     # 엑셀 파일 생성
     if excel_data:
         df = pd.DataFrame(excel_data)
 
         # 컬럼 순서 정리
-        df = df[['Patient_ID', 'Position', 'Layer_Number',
+        df = df[['Patient_ID', 'Position', 'Layer_Number', 'Layer_Name',
                 'Thickness_mm', 'Depth_Start_mm', 'Depth_End_mm',
-                'Total_Boundaries', 'Total_Layers']]
+                'Total_Positions', 'Total_Layers']]
 
         # 정렬
         df = df.sort_values(['Patient_ID', 'Position', 'Layer_Number'])

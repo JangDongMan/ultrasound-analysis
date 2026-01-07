@@ -1,0 +1,24 @@
+{
+  "source_file": "data/okk-5M-3.csv",
+  "start_point_us": 17.17,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 20.03,
+      "thickness_mm": 2.2021999999999995,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.2021999999999995
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.79,
+      "thickness_mm": 4.3274,
+      "depth_start_mm": 2.2021999999999995,
+      "depth_end_mm": 4.3274
+    }
+  ]
+}

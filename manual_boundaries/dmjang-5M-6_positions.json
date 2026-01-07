@@ -1,0 +1,24 @@
+{
+  "source_file": "data/dmjang-5M-6.csv",
+  "start_point_us": 17.36,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.34,
+      "thickness_mm": 1.5246000000000008,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.5246000000000008
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 21.330000000000002,
+      "thickness_mm": 3.056900000000001,
+      "depth_start_mm": 1.5246000000000008,
+      "depth_end_mm": 3.056900000000001
+    }
+  ]
+}

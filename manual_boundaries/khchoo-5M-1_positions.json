@@ -1,0 +1,24 @@
+{
+  "source_file": "data/khchoo-5M-1.csv",
+  "start_point_us": 17.36,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.39,
+      "thickness_mm": 1.5630999999999993,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.5630999999999993
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.67,
+      "thickness_mm": 4.088700000000001,
+      "depth_start_mm": 1.5630999999999993,
+      "depth_end_mm": 4.088700000000001
+    }
+  ]
+}

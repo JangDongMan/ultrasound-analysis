@@ -1,0 +1,24 @@
+{
+  "source_file": "data/bhjung-5M-8.csv",
+  "start_point_us": 17.11,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.81,
+      "thickness_mm": 2.0789999999999984,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.0789999999999984
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.67,
+      "thickness_mm": 4.281200000000001,
+      "depth_start_mm": 2.0789999999999984,
+      "depth_end_mm": 4.281200000000001
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "source_file": "data/sicho-5M-7-01.csv",
+  "start_point_us": 17.65,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.78,
+      "thickness_mm": 1.6401000000000012,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6401000000000012
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.36,
+      "thickness_mm": 3.6267000000000005,
+      "depth_start_mm": 1.6401000000000012,
+      "depth_end_mm": 3.6267000000000005
+    }
+  ]
+}

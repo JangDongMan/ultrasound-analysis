@@ -20,6 +20,8 @@ from typing import Dict, List, Tuple, Optional
 import warnings
 import matplotlib.pyplot as plt
 import os
+import json
+import glob
 
 warnings.filterwarnings('ignore')
 
@@ -538,6 +540,190 @@ class UltrasoundPreprocessor:
             return 0
 
         return -np.sum(hist * np.log2(hist))
+
+    def load_manual_label(self, label_file: str) -> Optional[Dict]:
+        """
+        manual_boundaries의 JSON 레이블 파일 로드
+
+        Args:
+            label_file: JSON 레이블 파일 경로
+
+        Returns:
+            레이블 데이터 딕셔너리 또는 None
+        """
+        try:
+            with open(label_file, 'r', encoding='utf-8') as f:
+                label_data = json.load(f)
+
+            print(f"레이블 로드 완료: {label_file}")
+            print(f"  - Start point: {label_data.get('start_point_us', 0):.2f}μs")
+            print(f"  - Positions: {label_data.get('num_positions', 0)}")
+
+            return label_data
+
+        except Exception as e:
+            print(f"레이블 로드 실패 ({label_file}): {e}")
+            return None
+
+    def find_label_for_data(self, csv_file_path: str, label_dir: str = "./manual_boundaries") -> Optional[Dict]:
+        """
+        CSV 데이터 파일에 해당하는 JSON 레이블 파일 찾기
+
+        Args:
+            csv_file_path: CSV 데이터 파일 경로
+            label_dir: 레이블 디렉토리 경로
+
+        Returns:
+            레이블 데이터 또는 None
+        """
+        # CSV 파일명에서 기본 이름 추출
+        base_name = os.path.basename(csv_file_path).replace('.csv', '')
+
+        # 해당하는 JSON 파일 찾기
+        label_file = os.path.join(label_dir, f"{base_name}_positions.json")
+
+        if os.path.exists(label_file):
+            return self.load_manual_label(label_file)
+        else:
+            print(f"레이블 파일 없음: {label_file}")
+            return None
+
+    def create_training_dataset(self, data_dir: str = "./data",
+                               label_dir: str = "./manual_boundaries",
+                               output_file: str = "./training_dataset.npz") -> Dict:
+        """
+        학습용 데이터셋 생성
+
+        Args:
+            data_dir: CSV 데이터 디렉토리
+            label_dir: JSON 레이블 디렉토리
+            output_file: 출력 파일 경로 (npz 형식)
+
+        Returns:
+            데이터셋 통계 정보
+        """
+        print(f"\n=== 학습 데이터셋 생성 시작 ===")
+        print(f"데이터 디렉토리: {data_dir}")
+        print(f"레이블 디렉토리: {label_dir}")
+
+        # 모든 레이블 파일 찾기
+        label_files = glob.glob(os.path.join(label_dir, "*_positions.json"))
+        print(f"발견된 레이블 파일: {len(label_files)}개")
+
+        dataset = {
+            'signals': [],          # 전처리된 신호
+            'time_data': [],        # 시간 데이터
+            'start_points': [],     # 시작점 (μs)
+            'dermis_times': [],     # 진피 시작 시간 (μs)
+            'fascia_times': [],     # 근막 시작 시간 (μs)
+            'dermis_thickness': [], # 진피 두께 (mm)
+            'fascia_thickness': [], # 근막 두께 (mm)
+            'file_names': [],       # 파일명
+        }
+
+        successful = 0
+        failed = 0
+
+        for label_file in label_files:
+            # 레이블 로드
+            label_data = self.load_manual_label(label_file)
+            if label_data is None:
+                failed += 1
+                continue
+
+            # 해당 CSV 파일 찾기
+            source_file = label_data.get('source_file', '')
+            if not os.path.exists(source_file):
+                # 상대 경로로 다시 시도
+                base_name = os.path.basename(label_file).replace('_positions.json', '')
+                source_file = os.path.join(data_dir, f"{base_name}.csv")
+
+            if not os.path.exists(source_file):
+                print(f"  ⚠ 소스 파일 없음: {source_file}")
+                failed += 1
+                continue
+
+            # 신호 데이터 로드
+            time_data, voltage_data = self.load_ultrasound_data(source_file)
+            if len(voltage_data) == 0:
+                failed += 1
+                continue
+
+            # 신호 전처리
+            processed_signal = self.preprocess_signal(voltage_data,
+                                                     normalize=True,
+                                                     remove_dc=True,
+                                                     filter_signal=True,
+                                                     apply_denoising=False)
+
+            # 레이블 정보 추출
+            start_point = label_data.get('start_point_us', 0)
+            positions = label_data.get('positions', [])
+
+            if len(positions) < 2:
+                print(f"  ⚠ 위치 정보 부족: {label_file}")
+                failed += 1
+                continue
+
+            # Dermis (position 1)
+            dermis_time = positions[0].get('time_us', 0)
+            dermis_thickness = positions[0].get('thickness_mm', 0)
+
+            # Fascia (position 2)
+            fascia_time = positions[1].get('time_us', 0)
+            fascia_thickness = positions[1].get('thickness_mm', 0)
+
+            # 데이터셋에 추가
+            dataset['signals'].append(processed_signal)
+            dataset['time_data'].append(time_data)
+            dataset['start_points'].append(start_point)
+            dataset['dermis_times'].append(dermis_time)
+            dataset['fascia_times'].append(fascia_time)
+            dataset['dermis_thickness'].append(dermis_thickness)
+            dataset['fascia_thickness'].append(fascia_thickness)
+            dataset['file_names'].append(os.path.basename(source_file))
+
+            successful += 1
+
+            if successful % 50 == 0:
+                print(f"  진행 중: {successful}개 처리 완료...")
+
+        print(f"\n=== 데이터셋 생성 완료 ===")
+        print(f"성공: {successful}개")
+        print(f"실패: {failed}개")
+
+        # numpy 배열로 변환 (signals는 길이가 다를 수 있으므로 object 타입)
+        dataset_arrays = {
+            'signals': np.array(dataset['signals'], dtype=object),
+            'time_data': np.array(dataset['time_data'], dtype=object),
+            'start_points': np.array(dataset['start_points']),
+            'dermis_times': np.array(dataset['dermis_times']),
+            'fascia_times': np.array(dataset['fascia_times']),
+            'dermis_thickness': np.array(dataset['dermis_thickness']),
+            'fascia_thickness': np.array(dataset['fascia_thickness']),
+            'file_names': np.array(dataset['file_names'], dtype=object),
+        }
+
+        # 저장
+        if output_file:
+            np.savez(output_file, **dataset_arrays)
+            print(f"\n데이터셋 저장됨: {output_file}")
+
+        # 통계 정보
+        stats = {
+            'total_samples': successful,
+            'avg_dermis_thickness': np.mean(dataset['dermis_thickness']),
+            'std_dermis_thickness': np.std(dataset['dermis_thickness']),
+            'avg_fascia_thickness': np.mean(dataset['fascia_thickness']),
+            'std_fascia_thickness': np.std(dataset['fascia_thickness']),
+        }
+
+        print(f"\n=== 데이터셋 통계 ===")
+        print(f"총 샘플 수: {stats['total_samples']}")
+        print(f"진피 두께 평균: {stats['avg_dermis_thickness']:.4f}mm (±{stats['std_dermis_thickness']:.4f})")
+        print(f"근막 두께 평균: {stats['avg_fascia_thickness']:.4f}mm (±{stats['std_fascia_thickness']:.4f})")
+
+        return stats
 
 def analyze_patient_data(patient_id: str, data_dir: str = "./data"):
     """특정 환자의 모든 8개 부위 데이터를 분석하고 표피 두께 일관성 비교"""

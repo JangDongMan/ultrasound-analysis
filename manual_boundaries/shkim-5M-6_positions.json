@@ -1,0 +1,24 @@
+{
+  "source_file": "data/shkim-5M-6.csv",
+  "start_point_us": 17.37,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.57,
+      "thickness_mm": 1.6939999999999993,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6939999999999993
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.11,
+      "thickness_mm": 3.649799999999999,
+      "depth_start_mm": 1.6939999999999993,
+      "depth_end_mm": 3.649799999999999
+    }
+  ]
+}

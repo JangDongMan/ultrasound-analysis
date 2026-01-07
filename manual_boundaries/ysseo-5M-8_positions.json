@@ -1,0 +1,24 @@
+{
+  "source_file": "data/ysseo-5M-8.csv",
+  "start_point_us": 17.25,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.919999999999998,
+      "thickness_mm": 2.0559,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.0559
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.4,
+      "thickness_mm": 3.9655000000000005,
+      "depth_start_mm": 2.0559,
+      "depth_end_mm": 3.9655000000000005
+    }
+  ]
+}

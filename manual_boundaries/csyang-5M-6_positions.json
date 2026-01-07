@@ -1,0 +1,24 @@
+{
+  "source_file": "data/csyang-5M-6.csv",
+  "start_point_us": 17.35,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.97,
+      "thickness_mm": 2.017399999999999,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.017399999999999
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.84,
+      "thickness_mm": 4.2273,
+      "depth_start_mm": 2.017399999999999,
+      "depth_end_mm": 4.2273
+    }
+  ]
+}

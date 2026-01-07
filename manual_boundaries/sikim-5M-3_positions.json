@@ -1,0 +1,24 @@
+{
+  "source_file": "data/sikim-5M-3.csv",
+  "start_point_us": 17.28,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 20.060000000000002,
+      "thickness_mm": 2.1406000000000005,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.1406000000000005
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.52,
+      "thickness_mm": 4.804799999999998,
+      "depth_start_mm": 2.1406000000000005,
+      "depth_end_mm": 4.804799999999998
+    }
+  ]
+}

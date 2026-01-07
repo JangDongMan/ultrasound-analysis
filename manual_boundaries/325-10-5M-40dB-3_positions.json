@@ -1,0 +1,24 @@
+{
+  "source_file": "data/325-10-5M-40dB-3.csv",
+  "start_point_us": 17.51,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 20.54,
+      "thickness_mm": 2.3331,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.3331
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.01,
+      "thickness_mm": 4.235000000000001,
+      "depth_start_mm": 2.3331,
+      "depth_end_mm": 4.235000000000001
+    }
+  ]
+}

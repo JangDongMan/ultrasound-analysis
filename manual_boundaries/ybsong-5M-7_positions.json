@@ -1,0 +1,24 @@
+{
+  "source_file": "data/ybsong-5M-7.csv",
+  "start_point_us": 17.33,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.54,
+      "thickness_mm": 1.7017000000000007,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7017000000000007
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.540000000000003,
+      "thickness_mm": 4.011700000000002,
+      "depth_start_mm": 1.7017000000000007,
+      "depth_end_mm": 4.011700000000002
+    }
+  ]
+}

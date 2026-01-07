@@ -1,0 +1,24 @@
+{
+  "source_file": "data/yrha-5M-1.csv",
+  "start_point_us": 17.31,
+  "num_positions": 2,
+  "speed_of_sound": 1540,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "Dermis",
+      "time_us": 19.720000000000002,
+      "thickness_mm": 1.855700000000002,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.855700000000002
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 22.39,
+      "thickness_mm": 3.911600000000002,
+      "depth_start_mm": 1.855700000000002,
+      "depth_end_mm": 3.911600000000002
+    }
+  ]
+}
