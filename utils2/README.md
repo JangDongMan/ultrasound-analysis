@@ -1,15 +1,16 @@
-# Utils2 - C++ 기반 피부층 경계 검출 라이브러리
+# Utils2 - C 기반 피부층 경계 검출 라이브러리
 
 ## 개요
 
-통계 기반 피부층 경계 자동 검출 알고리즘을 C++로 구현한 고성능 라이브러리입니다.
+통계 기반 피부층 경계 자동 검출 알고리즘을 순수 C 언어로 구현한 고성능 라이브러리입니다.
 
 ### 특징
 
-- **고성능**: C++로 구현되어 Python 대비 빠른 처리 속도
+- **고성능**: 순수 C로 구현되어 Python 대비 빠른 처리 속도
 - **통계 기반**: 234개 수동 레이블 분석 결과 기반 알고리즘
 - **Python 연동**: ctypes를 통한 간편한 Python 바인딩
 - **검증된 정확도**: 진피 검출 평균 오차 0.20mm
+- **의존성 최소화**: 표준 C 라이브러리만 사용
 
 ## 알고리즘 파라미터
 
@@ -30,8 +31,9 @@ MAX_DISTANCE_MM = 6.0             // 분석 범위 (mm)
 
 ### 요구사항
 
-- g++ (C++11 이상)
+- gcc (C 컴파일러)
 - Linux 또는 macOS
+- Python 3.x (Python 바인딩 사용 시)
 
 ### 컴파일
 
@@ -113,10 +115,9 @@ Result: ✓
 
 ```
 utils2/
-├── boundary_detector.cpp          # C++ 구현
+├── boundary_detector.c            # C 구현
 ├── boundary_detector_wrapper.py   # Python 래퍼
 ├── build.sh                       # 빌드 스크립트
-├── test_with_real_data.py        # 실제 데이터 테스트
 ├── libboundary_detector.so       # 컴파일된 라이브러리 (빌드 후)
 └── README.md                     # 이 파일
 ```
@@ -170,9 +171,10 @@ C++ 구현으로 Python 대비 약 10-50배 빠른 처리 속도를 보입니다
 Python 구현(`visualize_signal_improved.py`)과 동일한 알고리즘이지만:
 
 - **장점**:
-  - 빠른 처리 속도
+  - 빠른 처리 속도 (10-50배)
   - 메모리 효율성
   - 독립 실행 가능
+  - 순수 C로 이식성 좋음
 
 - **단점**:
   - 컴파일 필요
@@ -197,13 +199,13 @@ FileNotFoundError: Shared library not found
 ### 컴파일 오류
 
 ```
-g++: command not found
+gcc: command not found
 ```
 
-**해결**: g++ 설치
+**해결**: gcc 설치
 ```bash
 # Ubuntu/Debian
-sudo apt-get install g++
+sudo apt-get install gcc
 
 # macOS
 xcode-select --install

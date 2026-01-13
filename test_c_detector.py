@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """
-실제 초음파 데이터로 C++ 검출 알고리즘 테스트
+C로 구현된 경계 검출 알고리즘 테스트
 """
 
-import sys
-import os
 import json
 import numpy as np
-sys.path.append('..')
-
-from boundary_detector_wrapper import BoundaryDetector
+from utils2.boundary_detector_wrapper import BoundaryDetector
 
 
 def parse_ultrasound_csv(file_path):
@@ -46,20 +42,12 @@ def main():
     detector = BoundaryDetector()
 
     print(f"\n{'='*80}")
-    print(f"Testing C++ Boundary Detector with Real Data")
+    print(f"Testing C Boundary Detector with Real Data")
     print(f"{'='*80}\n")
 
     for patient_id, position in test_cases:
-        file_path = f'../data/{patient_id}-5M-{position}.csv'
-        json_path = f'../manual_boundaries/{patient_id}-5M-{position}_positions.json'
-
-        if not os.path.exists(file_path):
-            print(f"⚠ Data file not found: {file_path}")
-            continue
-
-        if not os.path.exists(json_path):
-            print(f"⚠ Label file not found: {json_path}")
-            continue
+        file_path = f'data/{patient_id}-5M-{position}.csv'
+        json_path = f'manual_boundaries/{patient_id}-5M-{position}_positions.json'
 
         # 데이터 로드
         time_data, voltage_data = parse_ultrasound_csv(file_path)
@@ -73,7 +61,7 @@ def main():
         manual_dermis_depth = manual_label['positions'][0]['thickness_mm']
         manual_fascia_depth = manual_label['positions'][1]['thickness_mm']
 
-        # C++ 검출
+        # C 검출
         dermis_idx, fascia_idx, success = detector.detect(
             time_us, voltage_data, manual_start_us
         )
@@ -105,7 +93,7 @@ def main():
         print(f"  Dermis: {manual_dermis_depth:.2f} mm")
         print(f"  Fascia: {manual_fascia_depth:.2f} mm")
 
-        print(f"\nC++ Detection:")
+        print(f"\nC Detection:")
         print(f"  Dermis: {auto_dermis_depth:.2f} mm (error: {dermis_error:.2f} mm)")
         print(f"  Fascia: {auto_fascia_depth:.2f} mm (error: {fascia_error:.2f} mm)")
 
