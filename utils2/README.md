@@ -37,12 +37,35 @@ MAX_DISTANCE_MM = 6.0             // 분석 범위 (mm)
 
 ### 컴파일
 
+**방법 1: Makefile 사용 (권장)**
+
+```bash
+cd utils2
+make           # 라이브러리 빌드
+make test      # 빌드 및 기본 테스트
+make test-real # 실제 데이터 테스트
+```
+
+**방법 2: 빌드 스크립트 사용**
+
 ```bash
 cd utils2
 ./build.sh
 ```
 
 컴파일이 성공하면 `libboundary_detector.so` 파일이 생성됩니다.
+
+**Makefile 주요 명령어:**
+```bash
+make           # 빌드
+make clean     # 빌드 산출물 제거
+make rebuild   # 클린 후 재빌드
+make test      # 기본 테스트
+make test-real # 실제 데이터 테스트
+make debug     # 디버그 빌드
+make info      # 빌드 설정 정보
+make help      # 도움말
+```
 
 ## 사용법
 
@@ -82,18 +105,25 @@ dermis_idx, fascia_idx, success = detect_skin_boundaries(
 
 ## 테스트
 
-### 기본 테스트
+### Makefile 사용 (권장)
 
+```bash
+cd utils2
+make test       # 기본 테스트
+make test-real  # 실제 데이터 테스트
+```
+
+### 수동 실행
+
+**기본 테스트:**
 ```bash
 cd utils2
 python3 boundary_detector_wrapper.py
 ```
 
-### 실제 데이터 테스트
-
+**실제 데이터 테스트:**
 ```bash
-cd utils2
-python3 test_with_real_data.py
+python3 test_c_detector.py
 ```
 
 출력 예시:
@@ -117,7 +147,8 @@ Result: ✓
 utils2/
 ├── boundary_detector.c            # C 구현
 ├── boundary_detector_wrapper.py   # Python 래퍼
-├── build.sh                       # 빌드 스크립트
+├── Makefile                       # Make 빌드 파일
+├── build.sh                       # 빌드 스크립트 (대체)
 ├── libboundary_detector.so       # 컴파일된 라이브러리 (빌드 후)
 └── README.md                     # 이 파일
 ```
