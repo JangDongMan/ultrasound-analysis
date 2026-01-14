@@ -69,7 +69,44 @@ make help      # 도움말
 
 ## 사용법
 
-### Python에서 사용
+### 1. 독립 실행파일 사용 (권장)
+
+가장 간단한 방법입니다. 컴파일 후 바로 사용 가능합니다.
+
+```bash
+# 빌드
+make
+
+# 실행
+./boundary_detector <csv_file> <start_time_us>
+
+# 예시
+./boundary_detector ../data/bhjung-5M-1.csv 17.26
+```
+
+**출력 예시:**
+```
+========================================
+Detection Results
+========================================
+
+Start Point: 17.26 μs
+
+Dermis (진피):
+  Index:    234
+  Time:     2.34 μs (from start)
+  Depth:    1.80 mm
+
+Fascia (근막):
+  Index:    506
+  Time:     5.06 μs (from start)
+  Depth:    3.90 mm
+
+Thickness (두께):
+  Dermis-Fascia: 2.09 mm
+```
+
+### 2. Python에서 사용
 
 ```python
 from utils2.boundary_detector_wrapper import BoundaryDetector
@@ -93,7 +130,7 @@ if success:
     print(f"Fascia index: {fascia_idx}")
 ```
 
-### 편의 함수 사용
+### 3. 편의 함수 사용
 
 ```python
 from utils2.boundary_detector_wrapper import detect_skin_boundaries
@@ -145,11 +182,13 @@ Result: ✓
 
 ```
 utils2/
-├── boundary_detector.c            # C 구현
+├── boundary_detector.c            # C 구현 (라이브러리)
+├── boundary_detector_cli.c        # CLI 프로그램
 ├── boundary_detector_wrapper.py   # Python 래퍼
 ├── Makefile                       # Make 빌드 파일
 ├── build.sh                       # 빌드 스크립트 (대체)
-├── libboundary_detector.so       # 컴파일된 라이브러리 (빌드 후)
+├── boundary_detector             # 실행파일 (빌드 후)
+├── libboundary_detector.so       # 공유 라이브러리 (빌드 후)
 └── README.md                     # 이 파일
 ```
 
