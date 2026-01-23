@@ -21,11 +21,17 @@
 #define SPEED_OF_SOUND 1540.0
 #define MAX_DISTANCE_MM 6.0
 
+/* 시작점 자동 검출 파라미터 (234개 샘플 통계) */
+#define START_POINT_EXPECTED_US 17.39
+#define START_POINT_STD_US 0.15
+#define START_POINT_SEARCH_WINDOW_US 1.0
+
 /* 검출 결과 구조체 */
 typedef struct {
     int dermis_idx;
     int fascia_idx;
     int success;
+    double actual_start_us;  /* 실제 사용된 시작점 (자동 검출된 경우 포함) */
 } DetectionResult;
 
 /* 동적 배열 구조체 */
@@ -130,6 +136,73 @@ IntArray* find_peaks(const double *signal, int n, double prominence_threshold, i
 }
 
 /**
+ * 시작점 자동 검출
+ *
+ * 통계 기반 예상 범위(17.39±1.0 μs)에서
+ * 신호의 급격한 상승이 시작되는 지점을 검출
+ *
+ * 통계: 평균 17.39±0.15 μs (234개 샘플)
+ * 검색 범위: 16.39~18.39 μs
+ */
+double auto_detect_start_point(const double *time_us, const double *voltage, int n) {
+    if (n < 10) {
+        return START_POINT_EXPECTED_US;
+    }
+
+    /* 예상 범위 설정: 평균 ± 1.0 μs */
+    double search_start_us = START_POINT_EXPECTED_US - START_POINT_SEARCH_WINDOW_US;
+    double search_end_us = START_POINT_EXPECTED_US + START_POINT_SEARCH_WINDOW_US;
+
+    /* 탐색 범위 인덱스 찾기 */
+    int start_idx = 0;
+    int end_idx = n - 1;
+
+    for (int i = 0; i < n; i++) {
+        if (time_us[i] >= search_start_us && start_idx == 0) {
+            start_idx = i;
+        }
+        if (time_us[i] >= search_end_us) {
+            end_idx = i;
+            break;
+        }
+    }
+
+    if (start_idx >= end_idx - 10 || start_idx < 1) {
+        /* 범위가 좁거나 시작점이 너무 앞쪽이면 기본값 사용 */
+        return START_POINT_EXPECTED_US;
+    }
+
+    /* 전체 탐색 범위에서 최대 기울기 계산 */
+    double max_gradient = 0.0;
+    for (int i = start_idx; i < end_idx - 1; i++) {
+        double abs_voltage_curr = fabs_d(voltage[i]);
+        double abs_voltage_next = fabs_d(voltage[i + 1]);
+        double gradient = abs_voltage_next - abs_voltage_curr;
+        if (gradient > max_gradient) {
+            max_gradient = gradient;
+        }
+    }
+
+    /* 처음으로 큰 상승이 시작되는 지점 찾기 (최대 기울기의 30% 이상) */
+    double threshold_gradient = max_gradient * 0.3;
+    int best_idx = start_idx;
+
+    for (int i = start_idx; i < end_idx - 1; i++) {
+        double abs_voltage_curr = fabs_d(voltage[i]);
+        double abs_voltage_next = fabs_d(voltage[i + 1]);
+        double gradient = abs_voltage_next - abs_voltage_curr;
+
+        /* 처음으로 임계값을 넘는 상승 시작점 */
+        if (gradient > threshold_gradient) {
+            best_idx = i;
+            break;
+        }
+    }
+
+    return time_us[best_idx];
+}
+
+/**
  * 변곡점 검출
  */
 IntArray* find_inflection_points(const double *signal, int n) {
@@ -166,6 +239,8 @@ IntArray* find_inflection_points(const double *signal, int n) {
 
 /**
  * 통계 기반 피부층 경계 검출
+ *
+ * reference_start_us가 0.0이면 자동 검출
  */
 DetectionResult detect_skin_boundaries(
     const double *time_us,
@@ -173,9 +248,15 @@ DetectionResult detect_skin_boundaries(
     int n,
     double reference_start_us
 ) {
-    DetectionResult result = {-1, -1, 0};
+    DetectionResult result = {-1, -1, 0, reference_start_us};
 
     if (n < 100) return result;
+
+    /* 시작점 자동 검출 (reference_start_us == 0.0인 경우) */
+    if (reference_start_us == 0.0) {
+        reference_start_us = auto_detect_start_point(time_us, voltage, n);
+        result.actual_start_us = reference_start_us;  /* 자동 검출된 값 저장 */
+    }
 
     /* 레퍼런스 시작점 찾기 */
     int start_idx = 0;

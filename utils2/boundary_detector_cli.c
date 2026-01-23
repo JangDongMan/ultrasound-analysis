@@ -18,6 +18,7 @@ typedef struct {
     int dermis_idx;
     int fascia_idx;
     int success;
+    double actual_start_us;
 } DetectionResult;
 
 extern DetectionResult detect_skin_boundaries(
@@ -27,7 +28,7 @@ extern DetectionResult detect_skin_boundaries(
     double reference_start_us
 );
 
-/* CSV 파일 파싱 */
+/* CSV/TXT 파일 파싱 */
 int parse_csv_file(const char *filename, double **time_us, double **voltage) {
     FILE *fp = fopen(filename, "r");
     if (!fp) {
@@ -37,8 +38,14 @@ int parse_csv_file(const char *filename, double **time_us, double **voltage) {
 
     /* 헤더 2줄 건너뛰기 */
     char line[1024];
-    if (!fgets(line, sizeof(line), fp)) return -1;
-    if (!fgets(line, sizeof(line), fp)) return -1;
+    if (!fgets(line, sizeof(line), fp)) {
+        fclose(fp);
+        return -1;
+    }
+    if (!fgets(line, sizeof(line), fp)) {
+        fclose(fp);
+        return -1;
+    }
 
     /* 데이터 읽기 (동적 배열) */
     int capacity = 100000;
@@ -65,7 +72,7 @@ int parse_csv_file(const char *filename, double **time_us, double **voltage) {
 }
 
 /* 결과 출력 */
-void print_results(DetectionResult result, const double *time_us, int n, double start_us) {
+void print_results(DetectionResult result, const double *time_us, int n, double start_us, int auto_detected) {
     if (!result.success) {
         printf("Detection failed!\n");
         return;
@@ -97,7 +104,11 @@ void print_results(DetectionResult result, const double *time_us, int n, double 
     printf("Detection Results\n");
     printf("========================================\n");
     printf("\n");
-    printf("Start Point: %.2f μs\n", start_us);
+    if (auto_detected) {
+        printf("Start Point: %.2f μs (auto-detected)\n", start_us);
+    } else {
+        printf("Start Point: %.2f μs (manual)\n", start_us);
+    }
     printf("\n");
     printf("Dermis (진피):\n");
     printf("  Index:    %d\n", result.dermis_idx);
@@ -117,17 +128,31 @@ void print_results(DetectionResult result, const double *time_us, int n, double 
 
 int main(int argc, char *argv[]) {
     /* 인자 확인 */
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <csv_file> <start_time_us>\n", argv[0]);
+    if (argc < 2 || argc > 3) {
+        fprintf(stderr, "Usage: %s <data_file> [start_time_us]\n", argv[0]);
+        fprintf(stderr, "\n");
+        fprintf(stderr, "Arguments:\n");
+        fprintf(stderr, "  data_file       Input data file (.csv or .txt)\n");
+        fprintf(stderr, "  start_time_us   Start point in microseconds (optional)\n");
+        fprintf(stderr, "                  If omitted, auto-detection is used\n");
         fprintf(stderr, "\n");
         fprintf(stderr, "Example:\n");
-        fprintf(stderr, "  %s ../data/bhjung-5M-1.csv 17.26\n", argv[0]);
+        fprintf(stderr, "  %s data/bhjung-5M-1.csv          # Auto-detect start point\n", argv[0]);
+        fprintf(stderr, "  %s data/bhjung-5M-1.csv 17.26    # Manual start point\n", argv[0]);
+        fprintf(stderr, "\n");
+        fprintf(stderr, "Supported formats: .csv, .txt\n");
         fprintf(stderr, "\n");
         return 1;
     }
 
     const char *csv_file = argv[1];
-    double start_time_us = atof(argv[2]);
+    double start_time_us = 0.0;  /* 0.0 = auto-detect */
+    int auto_detect = 1;
+
+    if (argc == 3) {
+        start_time_us = atof(argv[2]);
+        auto_detect = 0;
+    }
 
     printf("\n");
     printf("========================================\n");
@@ -135,7 +160,11 @@ int main(int argc, char *argv[]) {
     printf("========================================\n");
     printf("\n");
     printf("Input file:  %s\n", csv_file);
-    printf("Start time:  %.2f μs\n", start_time_us);
+    if (auto_detect) {
+        printf("Start point: Auto-detection enabled\n");
+    } else {
+        printf("Start point: %.2f μs (manual)\n", start_time_us);
+    }
     printf("\n");
 
     /* CSV 파일 읽기 */
@@ -153,8 +182,11 @@ int main(int argc, char *argv[]) {
     printf("\nDetecting boundaries...\n");
     DetectionResult result = detect_skin_boundaries(time_us, voltage, n, start_time_us);
 
+    /* 실제 사용된 시작점은 result.actual_start_us에 저장되어 있음 */
+    double actual_start_us = result.actual_start_us;
+
     /* 결과 출력 */
-    print_results(result, time_us, n, start_time_us);
+    print_results(result, time_us, n, actual_start_us, auto_detect);
 
     /* 메모리 해제 */
     free(time_us);

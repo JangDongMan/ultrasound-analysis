@@ -77,11 +77,13 @@ make help      # 도움말
 # 빌드
 make
 
-# 실행
-./boundary_detector <csv_file> <start_time_us>
+# 실행 (CSV 또는 TXT 파일 모두 지원, 시작점 자동 검출)
+./boundary_detector <data_file> [start_time_us]
 
 # 예시
-./boundary_detector ../data/bhjung-5M-1.csv 17.26
+./boundary_detector data/bhjung-5M-1.csv          # 시작점 자동 검출 (권장)
+./boundary_detector data/bhjung-5M-1.csv 17.26    # 시작점 수동 지정
+./boundary_detector data/bhjung-5M-1.txt          # TXT 파일도 지원
 ```
 
 **출력 예시:**
@@ -90,16 +92,16 @@ make
 Detection Results
 ========================================
 
-Start Point: 17.26 μs
+Start Point: 17.25 μs (auto-detected)
 
 Dermis (진피):
-  Index:    234
-  Time:     2.34 μs (from start)
-  Depth:    1.80 mm
+  Index:    235
+  Time:     2.35 μs (from start)
+  Depth:    1.81 mm
 
 Fascia (근막):
-  Index:    506
-  Time:     5.06 μs (from start)
+  Index:    507
+  Time:     5.07 μs (from start)
   Depth:    3.90 mm
 
 Thickness (두께):
@@ -194,6 +196,21 @@ utils2/
 
 ## 알고리즘 상세
 
+### Step 0: 시작점 자동 검출 (선택적)
+
+시작점을 지정하지 않으면 자동으로 검출합니다 (정확도: ±0.04 μs):
+
+1. **탐색 범위**: 16.39 ~ 18.39 μs (통계 기반: 평균 17.39±0.15 μs)
+2. **검출 방법**:
+   - 탐색 범위 내에서 최대 전압 변화율(기울기) 계산
+   - 처음으로 최대 기울기의 30% 이상 상승하는 지점 검출
+   - 이것이 초음파 펄스의 실제 시작점 (피부 표면)
+
+```cpp
+START_POINT_EXPECTED_US = 17.39    // 통계적 평균
+START_POINT_SEARCH_WINDOW_US = 1.0 // 탐색 범위: ±1.0 μs
+```
+
 ### Step 1: 표피 영역 제외
 
 1.5μs 이전 영역을 표피로 간주하고 완전히 제외합니다.
@@ -255,6 +272,7 @@ Python 구현(`visualize_signal_improved.py`)과 동일한 알고리즘이지만
 1. **플랫폼 의존성**: Linux/macOS용으로 빌드됨. Windows는 MinGW 또는 WSL 필요
 2. **라이브러리 경로**: `boundary_detector_wrapper.py`는 같은 디렉토리에 `.so` 파일이 있어야 함
 3. **데이터 형식**: numpy array는 `float64` (double) 타입이어야 함
+4. **입력 파일 형식**: CSV 및 TXT 파일 모두 지원 (형식은 동일: 헤더 2줄 + 시간,전압 데이터)
 
 ## 문제 해결
 
