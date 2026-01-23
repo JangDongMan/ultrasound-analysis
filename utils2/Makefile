@@ -59,10 +59,10 @@ $(CLI_TARGET): $(SRC) $(CLI_SRC)
 	@echo "  Executable: $(CLI_TARGET)"
 	@echo ""
 	@echo "Usage:"
-	@echo "  ./$(CLI_TARGET) <csv_file> <start_time_us>"
+	@echo "  ./$(CLI_TARGET) <data_file> [start_time_us]"
 	@echo ""
 	@echo "Example:"
-	@echo "  ./$(CLI_TARGET) ../data/bhjung-5M-1.csv 17.26"
+	@echo "  ./$(CLI_TARGET) ../data/bhjung-5M-1.csv"
 	@echo ""
 
 # 기본 테스트
@@ -162,8 +162,8 @@ help:
 	@echo "  sudo make install # Install system-wide"
 	@echo ""
 	@echo "Standalone executable usage:"
-	@echo "  ./boundary_detector <csv_file> <start_time_us>"
-	@echo "  ./boundary_detector ../data/bhjung-5M-1.csv 17.26"
+	@echo "  ./boundary_detector <data_file> [start_time_us]"
+	@echo "  ./boundary_detector ../data/bhjung-5M-1.csv"
 
 # 디버그 빌드
 .PHONY: debug
