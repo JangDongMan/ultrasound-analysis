@@ -77,11 +77,11 @@ class ConfigManager:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def set_positions(self, positions: List[str]):
-        """Set measurement positions (min 4, max 22)"""
+        """Set measurement positions (min 4, max 30)"""
         if len(positions) < 4:
             raise ValueError("Minimum 4 positions required")
-        if len(positions) > 22:
-            raise ValueError("Maximum 22 positions allowed")
+        if len(positions) > 30:
+            raise ValueError("Maximum 30 positions allowed")
 
         self.positions = positions
         self.save()

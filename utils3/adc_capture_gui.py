@@ -18,10 +18,38 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+from matplotlib.ticker import MultipleLocator
+import matplotlib.font_manager as fm
+import platform
+
+# Korean font setup for matplotlib (OS별 자동 선택)
+def _setup_korean_font():
+    candidates = {
+        'Windows': ['Malgun Gothic', 'Microsoft YaHei', 'Arial Unicode MS'],
+        'Darwin':  ['AppleGothic', 'Arial Unicode MS'],
+        'Linux':   ['NanumGothic', 'NanumBarunGothic', 'UnDotum', 'DejaVu Sans'],
+    }
+    os_name = platform.system()
+    for name in candidates.get(os_name, []):
+        if any(name.lower() in f.name.lower() for f in fm.fontManager.ttflist):
+            matplotlib.rcParams['font.family'] = name
+            matplotlib.rcParams['axes.unicode_minus'] = False
+            return
+    for f in fm.fontManager.ttflist:
+        if any(k in f.name for k in ['Gothic', 'Gulim', 'Batang', 'Nanum']):
+            matplotlib.rcParams['font.family'] = f.name
+            matplotlib.rcParams['axes.unicode_minus'] = False
+            return
+
+_setup_korean_font()
 
 from serial_comm import UltrasoundSerial, save_to_csv, load_from_csv
 from config import ConfigManager
 
+
+# Data trimming
+DEFAULT_DROP = 1200     # Default drop count (12.00 μs at 10ns interval)
+TRIM_COUNT = 1250       # Keep samples (~10mm at 1540 m/s)
 
 # CustomTkinter settings
 ctk.set_appearance_mode("dark")
@@ -60,7 +88,7 @@ class PositionSetupDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Enter Measurement Positions",
                      font=ctk.CTkFont(size=16, weight="bold")).pack(pady=15)
 
-        ctk.CTkLabel(self, text="(Minimum 4, Maximum 22 positions)").pack(pady=5)
+        ctk.CTkLabel(self, text="(Minimum 4, Maximum 30 positions)").pack(pady=5)
 
         # Text area for positions
         self.text_frame = ctk.CTkFrame(self)
@@ -102,8 +130,8 @@ class PositionSetupDialog(ctk.CTkToplevel):
         if len(positions) < 4:
             messagebox.showerror("Error", "Minimum 4 positions required")
             return
-        if len(positions) > 22:
-            messagebox.showerror("Error", "Maximum 22 positions allowed")
+        if len(positions) > 30:
+            messagebox.showerror("Error", "Maximum 30 positions allowed")
             return
 
         self.result = positions
@@ -121,7 +149,7 @@ class ADCCaptureGUI(ctk.CTk):
         super().__init__()
 
         # Window settings
-        self.title("Ultrasound ADC Capture")
+        self.title("VB5K Capture")
 
         # Center window on screen
         window_width = 1200
@@ -140,6 +168,7 @@ class ADCCaptureGUI(ctk.CTk):
         # Data storage
         self.time_ns = np.array([])
         self.adc_values = np.array([])
+        self.drop_samples = DEFAULT_DROP  # Current drop count for display offset
 
         # Previous data for comparison
         self.prev_time_ns = np.array([])
@@ -193,11 +222,16 @@ class ADCCaptureGUI(ctk.CTk):
 
         # Grid setup
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
 
-        # ===== Row 0: Serial Connection =====
+        # ===== Row 0: Title =====
+        ctk.CTkLabel(self, text="VB5K Capture",
+                     font=ctk.CTkFont(size=28, weight="bold")).grid(
+            row=0, column=0, padx=15, pady=(10, 2))
+
+        # ===== Row 1: Serial Connection =====
         conn_frame = ctk.CTkFrame(self, corner_radius=10)
-        conn_frame.grid(row=0, column=0, padx=15, pady=(15, 5), sticky="ew")
+        conn_frame.grid(row=1, column=0, padx=15, pady=(5, 5), sticky="ew")
 
         ctk.CTkLabel(conn_frame, text="Serial",
                      font=ctk.CTkFont(size=14, weight="bold")).grid(
@@ -226,9 +260,9 @@ class ADCCaptureGUI(ctk.CTk):
                                               font=ctk.CTkFont(size=16))
         self.status_indicator.grid(row=0, column=7, padx=10, pady=10)
 
-        # ===== Row 1: Patient Info & Position =====
+        # ===== Row 2: Patient Info & Position =====
         info_frame = ctk.CTkFrame(self, corner_radius=10)
-        info_frame.grid(row=1, column=0, padx=15, pady=5, sticky="ew")
+        info_frame.grid(row=2, column=0, padx=15, pady=5, sticky="ew")
 
         # Patient name
         ctk.CTkLabel(info_frame, text="Patient:",
@@ -279,9 +313,9 @@ class ADCCaptureGUI(ctk.CTk):
                                            fg_color="gray", command=self._edit_positions)
         self.edit_pos_btn.grid(row=0, column=8, padx=15, pady=10)
 
-        # ===== Row 2: Capture Settings =====
+        # ===== Row 3: Capture Settings =====
         cap_frame = ctk.CTkFrame(self, corner_radius=10)
-        cap_frame.grid(row=2, column=0, padx=15, pady=5, sticky="ew")
+        cap_frame.grid(row=3, column=0, padx=15, pady=5, sticky="ew")
 
         ctk.CTkLabel(cap_frame, text="Capture",
                      font=ctk.CTkFont(size=14, weight="bold")).grid(
@@ -292,10 +326,10 @@ class ADCCaptureGUI(ctk.CTk):
         self.cmd_entry.insert(0, "pwm start 5 1")
         self.cmd_entry.grid(row=0, column=2, padx=5, pady=10)
 
-        ctk.CTkLabel(cap_frame, text="Samples:").grid(row=0, column=3, padx=5, pady=10)
-        self.samples_entry = ctk.CTkEntry(cap_frame, width=70)
-        self.samples_entry.insert(0, "4200")
-        self.samples_entry.grid(row=0, column=4, padx=5, pady=10)
+        ctk.CTkLabel(cap_frame, text="Drop:").grid(row=0, column=3, padx=5, pady=10)
+        self.drop_entry = ctk.CTkEntry(cap_frame, width=70)
+        self.drop_entry.insert(0, str(DEFAULT_DROP))
+        self.drop_entry.grid(row=0, column=4, padx=5, pady=10)
 
         ctk.CTkLabel(cap_frame, text="Timeout:").grid(row=0, column=5, padx=5, pady=10)
         self.timeout_entry = ctk.CTkEntry(cap_frame, width=50)
@@ -320,9 +354,9 @@ class ADCCaptureGUI(ctk.CTk):
         self.progress_label = ctk.CTkLabel(cap_frame, text="Ready", width=100)
         self.progress_label.grid(row=0, column=10, padx=5, pady=10)
 
-        # ===== Row 3: Graph =====
+        # ===== Row 4: Graph =====
         graph_frame = ctk.CTkFrame(self, corner_radius=10)
-        graph_frame.grid(row=3, column=0, padx=15, pady=5, sticky="nsew")
+        graph_frame.grid(row=4, column=0, padx=15, pady=5, sticky="nsew")
         graph_frame.grid_columnconfigure(0, weight=1)
         graph_frame.grid_rowconfigure(0, weight=1)
 
@@ -347,9 +381,9 @@ class ADCCaptureGUI(ctk.CTk):
         self.toolbar.config(background='#2b2b2b')
         self.toolbar.update()
 
-        # ===== Row 4: Bottom buttons =====
+        # ===== Row 5: Bottom buttons =====
         bottom_frame = ctk.CTkFrame(self, corner_radius=10)
-        bottom_frame.grid(row=4, column=0, padx=15, pady=(5, 15), sticky="ew")
+        bottom_frame.grid(row=5, column=0, padx=15, pady=(5, 15), sticky="ew")
         bottom_frame.grid_columnconfigure(8, weight=1)
 
         self.save_btn = ctk.CTkButton(bottom_frame, text="Quick Save", width=100,
@@ -554,16 +588,19 @@ class ADCCaptureGUI(ctk.CTk):
 
         cmd = self.cmd_entry.get()
         try:
-            num_samples = int(self.samples_entry.get())
+            self.drop_samples = int(self.drop_entry.get())
             timeout = float(self.timeout_entry.get())
         except ValueError:
-            messagebox.showerror("Error", "Invalid samples or timeout value")
+            messagebox.showerror("Error", "Invalid drop or timeout value")
             self.capture_btn.configure(state="normal")
             self.send_btn.configure(state="normal")
             return
 
+        # Capture: drop + keep
+        capture_samples = self.drop_samples + TRIM_COUNT
+
         thread = threading.Thread(target=self._capture_thread,
-                                   args=(cmd, num_samples, timeout), daemon=True)
+                                   args=(cmd, capture_samples, timeout), daemon=True)
         thread.start()
 
     def _capture_thread(self, cmd, num_samples, capture_timeout):
@@ -595,6 +632,21 @@ class ADCCaptureGUI(ctk.CTk):
 
         self.after(100, self._check_queue)
 
+    def _trim_data(self, time_ns, adc_values, drop=None):
+        """Trim data: discard first 'drop' samples, keep TRIM_COUNT, discard rest.
+        Returns new (time_ns, adc_values) starting from index 0."""
+        if drop is None:
+            drop = self.drop_samples
+        end = drop + TRIM_COUNT
+        if len(adc_values) >= end:
+            trimmed = adc_values[drop:end]
+        elif len(adc_values) > drop:
+            trimmed = adc_values[drop:]
+        else:
+            return time_ns, adc_values  # not enough data, return as-is
+        new_time_ns = np.arange(len(trimmed)) * 10
+        return new_time_ns, trimmed
+
     def _on_capture_done(self, time_ns, adc_values):
         """Capture done handler"""
         # 현재 데이터가 있으면 직전 버퍼로 이동
@@ -603,12 +655,16 @@ class ADCCaptureGUI(ctk.CTk):
             self.prev_adc_values = self.adc_values.copy()
             self.compare_btn.configure(state="normal")
 
+        # Trim: discard first drop_samples, keep TRIM_COUNT, discard rest
+        raw_count = len(adc_values)
+        time_ns, adc_values = self._trim_data(time_ns, adc_values)
         self.time_ns = time_ns
         self.adc_values = adc_values
 
         if len(adc_values) > 0:
             self.progress_bar.set(1)
-            self.progress_label.configure(text=f"Done: {len(adc_values)} samples")
+            self.progress_label.configure(
+                text=f"Done: {raw_count} captured, {len(adc_values)} kept")
             self.save_btn.configure(state="normal")
             self._update_graph()
             self._update_data_info()
@@ -653,9 +709,12 @@ class ADCCaptureGUI(ctk.CTk):
 
         show_envelope = self.envelope_switch.get()
 
-        # 직전 데이터 (파란색, 반투명)
+        # Display offset from drop count
+        offset_us = self.drop_samples * 0.01
+
+        # 직전 데이터 (빨간색, 반투명) - add display offset
         if self.show_compare and len(self.prev_adc_values) > 0:
-            prev_time_us = self.prev_time_ns / 1000.0
+            prev_time_us = self.prev_time_ns / 1000.0 + offset_us
             prev_color = '#ff4444' if is_dark else '#cc3333'
             if show_envelope:
                 prev_env = self._compute_envelope(self.prev_adc_values)
@@ -666,7 +725,7 @@ class ADCCaptureGUI(ctk.CTk):
                            linewidth=0.6, alpha=0.5, label="Previous")
 
         if len(self.adc_values) > 0:
-            time_us = self.time_ns / 1000.0
+            time_us = self.time_ns / 1000.0 + offset_us
 
             if show_envelope:
                 envelope = self._compute_envelope(self.adc_values)
@@ -688,9 +747,15 @@ class ADCCaptureGUI(ctk.CTk):
                              facecolor=bg_color, edgecolor=grid_color,
                              labelcolor=text_color)
 
+            # Fine x-axis ticks for better resolution
+            self.ax.xaxis.set_major_locator(MultipleLocator(1.0))   # 1μs major
+            self.ax.xaxis.set_minor_locator(MultipleLocator(0.5))   # 0.5μs minor
+            self.ax.tick_params(axis='x', which='minor', length=3)
+
         else:
             # Default view when no data
-            self.ax.set_xlim(0, 20)
+            self.ax.set_xlim(offset_us,
+                            offset_us + (TRIM_COUNT - 1) * 0.01)
             self.ax.set_ylim(0, 256)
             if show_envelope:
                 self.ax.set_ylabel("Envelope", color=text_color)
@@ -706,10 +771,12 @@ class ADCCaptureGUI(ctk.CTk):
     def _update_data_info(self):
         """Update data info"""
         if len(self.adc_values) > 0:
-            duration_us = self.time_ns[-1] / 1000.0
+            offset_us = self.drop_samples * 0.01
+            start_us = offset_us
+            end_us = self.time_ns[-1] / 1000.0 + offset_us
             max_val = np.max(self.adc_values)
             min_val = np.min(self.adc_values)
-            info = f"Samples: {len(self.adc_values)} | Time: {duration_us:.2f}us | Min: {min_val} | Max: {max_val}"
+            info = f"Samples: {len(self.adc_values)} | {start_us:.1f}~{end_us:.1f}us | Min: {min_val} | Max: {max_val}"
             self.data_info.configure(text=info)
         else:
             self.data_info.configure(text="No Data")
@@ -781,7 +848,17 @@ class ADCCaptureGUI(ctk.CTk):
 
         if filepath:
             try:
-                self.time_ns, self.adc_values, metadata = load_from_csv(filepath)
+                time_ns, adc_values, metadata = load_from_csv(filepath)
+                # Update drop from UI
+                try:
+                    self.drop_samples = int(self.drop_entry.get())
+                except ValueError:
+                    self.drop_samples = DEFAULT_DROP
+                # Trim if loaded file has more than TRIM_COUNT samples
+                if len(adc_values) > TRIM_COUNT:
+                    time_ns, adc_values = self._trim_data(time_ns, adc_values)
+                self.time_ns = time_ns
+                self.adc_values = adc_values
                 self._update_graph()
                 self._update_data_info()
                 self.save_btn.configure(state="normal")

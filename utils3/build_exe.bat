@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo Ultrasound ADC Capture - Build EXE
+echo VB5K Capture - Build EXE
 echo ====================================
 echo.
 
@@ -8,7 +8,7 @@ echo [1/2] Installing required packages...
 py -3 -m pip install pyinstaller customtkinter scipy pyserial matplotlib numpy --quiet
 
 echo [2/2] Building executable...
-py -3 -m PyInstaller --onefile --windowed --name "UltrasoundCapture" ^
+py -3 -m PyInstaller --onefile --windowed --name "vb5k_capture" ^
     --hidden-import=customtkinter ^
     --hidden-import=scipy.signal ^
     --hidden-import=serial.tools.list_ports ^
@@ -17,9 +17,9 @@ py -3 -m PyInstaller --onefile --windowed --name "UltrasoundCapture" ^
 
 echo.
 echo ====================================
-if exist "dist\UltrasoundCapture.exe" (
+if exist "dist\vb5k_capture.exe" (
     echo Build SUCCESS!
-    echo Executable: dist\UltrasoundCapture.exe
+    echo Executable: dist\vb5k_capture.exe
 ) else (
     echo Build FAILED! Check errors above.
 )

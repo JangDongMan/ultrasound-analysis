@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo Ultrasound Boundary Marker - Build
+echo VB5K Boundary Marker - Build
 echo ====================================
 echo.
 
@@ -15,7 +15,7 @@ echo [1/2] Installing required packages...
 py -3 -m pip install pyinstaller customtkinter scipy matplotlib numpy --quiet
 
 echo [2/2] Building executable...
-py -3 -m PyInstaller --onefile --windowed --name "BoundaryMarker" ^
+py -3 -m PyInstaller --onefile --windowed --name "vb5k_marker" ^
     --hidden-import=customtkinter ^
     --hidden-import=scipy.signal ^
     --collect-data customtkinter ^
@@ -23,9 +23,9 @@ py -3 -m PyInstaller --onefile --windowed --name "BoundaryMarker" ^
 
 echo.
 echo ====================================
-if exist "dist\BoundaryMarker.exe" (
+if exist "dist\vb5k_marker.exe" (
     echo Build SUCCESS!
-    echo Executable: dist\BoundaryMarker.exe
+    echo Executable: dist\vb5k_marker.exe
 ) else (
     echo Build FAILED! Check errors above.
 )

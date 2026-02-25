@@ -78,7 +78,10 @@ class UltrasoundSerial:
             print("연결 해제됨")
 
     def send_command(self, cmd: str) -> bool:
-        """커맨드 전송
+        """커맨드 전송 (한 글자씩 5ms 간격)
+
+        디바이스가 TX 중일 때 RX 오버플로우를 방지하기 위해
+        각 문자를 개별적으로 전송.
 
         Args:
             cmd: 전송할 커맨드 (개행 문자 자동 추가)
@@ -91,10 +94,13 @@ class UltrasoundSerial:
             return False
 
         try:
-            # 커맨드에 개행 문자 추가
             if not cmd.endswith('\n'):
                 cmd += '\n'
-            self.ser.write(cmd.encode('ascii'))
+            # 한 글자씩 5ms 간격으로 전송
+            # 디바이스 UART가 TX 중이어도 각 문자 수신 가능
+            for ch in cmd.encode('ascii'):
+                self.ser.write(bytes([ch]))
+                time.sleep(0.005)
             self.ser.flush()
             return True
         except serial.SerialException as e:
@@ -106,13 +112,13 @@ class UltrasoundSerial:
         """VB5K ADC data receive
 
         VB5K 출력 순서:
-          1. 커맨드 에코 (pwm start 5 1)
+          1. 커맨드 에코 (pwm start 5 1) - VB5K 프롬프트 포함 가능
           2. FPGA capture done(0:...)
           3. 초기 쓰레기 값 (85, 204, 170, 51 등)
           4. VB5K > 프롬프트 ← 데이터 시작 마커
           5. 실제 ADC 데이터
 
-        Phase 1: VB5K 프롬프트까지 스킵
+        Phase 1: FPGA 확인 후 VB5K 프롬프트까지 스킵
         Phase 2: 프롬프트 이후 ADC 데이터 수집 (idle timeout으로 종료)
 
         Args:
@@ -132,14 +138,15 @@ class UltrasoundSerial:
         start_time = time.time()
 
         # Phase 1: FPGA 확인 후 VB5K 프롬프트까지 스킵
-        # FPGA는 커맨드 실행에서만 나오므로, wait_ready에서 누출된 VB5K와 구분 가능
         fpga_found = False
         prompt_found = False
+        phase1_lines = 0
         while time.time() - start_time < capture_timeout:
             try:
                 line = self.ser.readline().decode('ascii', errors='ignore').strip()
                 if not line:
                     continue
+                phase1_lines += 1
                 if 'FPGA' in line:
                     fpga_found = True
                 if fpga_found and 'VB5K' in line:
@@ -151,9 +158,9 @@ class UltrasoundSerial:
 
         if not prompt_found:
             if not fpga_found:
-                print("Timeout: FPGA response not found")
+                print(f"Timeout: FPGA not found ({phase1_lines} lines read)")
             else:
-                print("Timeout: VB5K prompt not found")
+                print(f"Timeout: VB5K not found after FPGA ({phase1_lines} lines)")
             return np.array([]), np.array([])
 
         # Phase 2: 프롬프트 이후 ADC 데이터 수집
@@ -200,19 +207,63 @@ class UltrasoundSerial:
         return time_ns, adc_values
 
     def flush_buffer(self):
-        """시리얼 버퍼 완전히 비우기"""
+        """시리얼 버퍼 완전히 비우기 - 1초간 데이터 없을 때까지 drain"""
         if not self.ser or not self.ser.is_open:
             return
         self.ser.reset_input_buffer()
-        time.sleep(0.1)
-        while self.ser.in_waiting > 0:
-            self.ser.read(self.ser.in_waiting)
-            time.sleep(0.05)
+        last_rx = time.time()
+        while time.time() - last_rx < 1.0:
+            n = self.ser.in_waiting
+            if n > 0:
+                self.ser.read(n)
+                last_rx = time.time()
+            time.sleep(0.02)
         self.ser.reset_input_buffer()
+
+    def wait_ready(self, timeout: float = 3.0) -> bool:
+        """VB5K 프롬프트 확인하여 디바이스 idle 상태 확인
+
+        1. 버퍼 클리어 (잔여 VB5K 프롬프트 제거)
+        2. Enter 전송 → VB5K 응답 대기
+        3. VB5K 확인 = 디바이스 idle
+
+        Returns:
+            준비 완료 여부
+        """
+        if not self.ser or not self.ser.is_open:
+            return False
+
+        # 잔여 데이터 제거 (이전 VB5K 프롬프트 등)
+        self.ser.reset_input_buffer()
+        time.sleep(0.1)
+        self.ser.reset_input_buffer()
+
+        # Enter 전송 → VB5K 프롬프트 응답 대기
+        self.ser.write(b'\n')
+        self.ser.flush()
+
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                line = self.ser.readline().decode('ascii', errors='ignore').strip()
+                if not line:
+                    continue
+                if 'VB5K' in line:
+                    # VB5K 프롬프트 확인 → 디바이스 idle
+                    self.ser.reset_input_buffer()
+                    return True
+            except serial.SerialException:
+                return False
+
+        return False
 
     def capture(self, command: str = "pwm start 5 1", num_samples: int = None,
                 capture_timeout: float = 10.0, callback=None) -> Tuple[np.ndarray, np.ndarray]:
         """Send command and capture ADC data from VB5K
+
+        디바이스 UART는 TX 중 RX 오버플로우 가능성이 있으므로:
+        1. wait_ready로 디바이스 idle 확인
+        2. 커맨드를 한 글자씩 5ms 간격으로 전송
 
         Args:
             command: command to send (must start with "pwm")
@@ -223,17 +274,17 @@ class UltrasoundSerial:
         Returns:
             (time_ns, adc_values)
         """
-        # 버퍼 비우기
-        self.flush_buffer()
+        # 1. 디바이스 idle 확인 (이전 잔여 출력 소진 + VB5K 프롬프트 대기)
+        if not self.wait_ready():
+            print("Warning: Device not ready, attempting capture anyway")
+            self.flush_buffer()
 
-        # Send command
+        # 2. 커맨드 전송 (한 글자씩 5ms 간격, UART RX 오버플로우 방지)
         if not self.send_command(command):
             return np.array([]), np.array([])
 
-        # Receive data
-        time_ns, adc_values = self.read_adc_data(num_samples, capture_timeout, callback)
-
-        return time_ns, adc_values
+        # 3. 응답 수신
+        return self.read_adc_data(num_samples, capture_timeout, callback)
 
     def __enter__(self):
         self.connect()
