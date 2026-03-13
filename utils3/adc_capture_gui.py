@@ -9,6 +9,8 @@ import threading
 import queue
 import time
 import os
+import sys
+import io
 from datetime import datetime
 
 import numpy as np
@@ -177,6 +179,11 @@ class ADCCaptureGUI(ctk.CTk):
         # Thread queue
         self.data_queue = queue.Queue()
 
+        # Raw data (before trimming) for debug
+        self.raw_adc_values = np.array([])
+        self.show_raw = False
+        self.show_drop = False
+
         # Config manager
         self.config = ConfigManager()
 
@@ -222,7 +229,7 @@ class ADCCaptureGUI(ctk.CTk):
 
         # Grid setup
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=1)
 
         # ===== Row 0: Title =====
         ctk.CTkLabel(self, text="VB5K Capture",
@@ -322,8 +329,11 @@ class ADCCaptureGUI(ctk.CTk):
             row=0, column=0, padx=15, pady=10, sticky="w")
 
         ctk.CTkLabel(cap_frame, text="Command:").grid(row=0, column=1, padx=5, pady=10)
-        self.cmd_entry = ctk.CTkEntry(cap_frame, width=140)
-        self.cmd_entry.insert(0, "pwm start 5 1")
+        self.cmd_entry = ctk.CTkComboBox(
+            cap_frame, width=160,
+            values=["pwm start 5 1", "pwm start ulso"],
+            state="normal")
+        self.cmd_entry.set("pwm start 5 1")
         self.cmd_entry.grid(row=0, column=2, padx=5, pady=10)
 
         ctk.CTkLabel(cap_frame, text="Drop:").grid(row=0, column=3, padx=5, pady=10)
@@ -354,13 +364,52 @@ class ADCCaptureGUI(ctk.CTk):
         self.progress_label = ctk.CTkLabel(cap_frame, text="Ready", width=100)
         self.progress_label.grid(row=0, column=10, padx=5, pady=10)
 
-        # ===== Row 4: Graph =====
+        self.debug_btn = ctk.CTkButton(cap_frame, text="Debug ▼", width=80,
+                                        fg_color="#6c757d", hover_color="#545b62",
+                                        command=self._toggle_debug)
+        self.debug_btn.grid(row=0, column=11, padx=(10, 15), pady=10)
+
+        # ===== Row 4: Debug Log (collapsible) =====
+        self.debug_visible = False
+        self.debug_frame = ctk.CTkFrame(self, corner_radius=10)
+        # Not gridded initially (hidden)
+
+        log_header = ctk.CTkFrame(self.debug_frame, fg_color="transparent")
+        log_header.pack(fill="x", padx=10, pady=(5, 0))
+        ctk.CTkLabel(log_header, text="Serial Log",
+                     font=ctk.CTkFont(size=12, weight="bold")).pack(side="left", padx=5)
+
+        self.log_clear_btn = ctk.CTkButton(log_header, text="Clear", width=50,
+                                            fg_color="gray", command=self._clear_log)
+        self.log_clear_btn.pack(side="right", padx=5)
+
+        self.raw_save_btn = ctk.CTkButton(log_header, text="Save Raw", width=80,
+                                           fg_color="#6c757d", hover_color="#545b62",
+                                           command=self._save_raw_data, state="disabled")
+        self.raw_save_btn.pack(side="right", padx=5)
+
+        self.raw_toggle_btn = ctk.CTkButton(log_header, text="Show Raw", width=80,
+                                             fg_color="#17a2b8", hover_color="#138496",
+                                             command=self._toggle_raw)
+        self.raw_toggle_btn.pack(side="right", padx=5)
+
+        self.drop_toggle_btn = ctk.CTkButton(log_header, text="Show Drop", width=80,
+                                             fg_color="#e67e22", hover_color="#ca6f1e",
+                                             command=self._toggle_drop)
+        self.drop_toggle_btn.pack(side="right", padx=5)
+
+        self.log_text = ctk.CTkTextbox(self.debug_frame, height=100,
+                                        font=ctk.CTkFont(family="Courier", size=11))
+        self.log_text.pack(fill="both", expand=True, padx=10, pady=(2, 8))
+        self.log_text.configure(state="disabled")
+
+        # ===== Row 5: Graph =====
         graph_frame = ctk.CTkFrame(self, corner_radius=10)
-        graph_frame.grid(row=4, column=0, padx=15, pady=5, sticky="nsew")
+        graph_frame.grid(row=5, column=0, padx=15, pady=5, sticky="nsew")
         graph_frame.grid_columnconfigure(0, weight=1)
         graph_frame.grid_rowconfigure(0, weight=1)
 
-        # matplotlib Figure
+        # matplotlib Figure (row 5)
         plt.style.use('dark_background')
         self.fig = Figure(figsize=(10, 4), dpi=100, facecolor='#2b2b2b')
         self.ax = self.fig.add_subplot(111)
@@ -381,9 +430,9 @@ class ADCCaptureGUI(ctk.CTk):
         self.toolbar.config(background='#2b2b2b')
         self.toolbar.update()
 
-        # ===== Row 5: Bottom buttons =====
+        # ===== Row 6: Bottom buttons =====
         bottom_frame = ctk.CTkFrame(self, corner_radius=10)
-        bottom_frame.grid(row=5, column=0, padx=15, pady=(5, 15), sticky="ew")
+        bottom_frame.grid(row=6, column=0, padx=15, pady=(5, 15), sticky="ew")
         bottom_frame.grid_columnconfigure(8, weight=1)
 
         self.save_btn = ctk.CTkButton(bottom_frame, text="Quick Save", width=100,
@@ -604,11 +653,22 @@ class ADCCaptureGUI(ctk.CTk):
         thread.start()
 
     def _capture_thread(self, cmd, num_samples, capture_timeout):
-        """Capture thread"""
+        """Capture thread — stdout redirected to log panel"""
         def progress_callback(count, value):
             self.data_queue.put(('progress', count, num_samples))
 
-        time_ns, adc_values = self.serial.capture(cmd, num_samples, capture_timeout, progress_callback)
+        # Redirect serial_comm print() to log panel
+        log_buf = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = log_buf
+
+        try:
+            time_ns, adc_values = self.serial.capture(cmd, num_samples, capture_timeout, progress_callback)
+        finally:
+            sys.stdout = old_stdout
+
+        log_text = log_buf.getvalue()
+        self.data_queue.put(('log', log_text, cmd, num_samples, adc_values))
         self.data_queue.put(('done', time_ns, adc_values))
 
     def _check_queue(self):
@@ -622,6 +682,21 @@ class ADCCaptureGUI(ctk.CTk):
                     progress = count / total if total > 0 else 0
                     self.progress_bar.set(progress)
                     self.progress_label.configure(text=f"Capturing... {count}/{total}")
+
+                elif msg[0] == 'log':
+                    log_text, cmd, num_samples, adc_values = msg[1], msg[2], msg[3], msg[4]
+                    self._append_log(f"[CMD] {cmd}  (requested={num_samples})\n")
+                    self._append_log(log_text)
+                    # Show first/last values summary
+                    if len(adc_values) > 0:
+                        n = len(adc_values)
+                        head = ' '.join(str(v) for v in adc_values[:10])
+                        tail = ' '.join(str(v) for v in adc_values[-10:])
+                        self._append_log(f"[RAW] total={n}  first10=[{head}]\n")
+                        self._append_log(f"[RAW]              last10=[{tail}]\n")
+                    self.raw_adc_values = adc_values.copy() if len(adc_values) > 0 else np.array([])
+                    if len(adc_values) > 0:
+                        self.raw_save_btn.configure(state="normal")
 
                 elif msg[0] == 'done':
                     time_ns, adc_values = msg[1], msg[2]
@@ -724,8 +799,65 @@ class ADCCaptureGUI(ctk.CTk):
                 self.ax.plot(prev_time_us, self.prev_adc_values, color=prev_color,
                            linewidth=0.6, alpha=0.5, label="Previous")
 
-        if len(self.adc_values) > 0:
+        if self.show_raw and len(self.raw_adc_values) > 0:
+            # Raw mode: show full untrimed data with drop region highlighted
+            raw_time_us = np.arange(len(self.raw_adc_values)) * 0.01  # 10ns/sample → μs
+            drop_n = self.drop_samples
+            keep_end = drop_n + TRIM_COUNT
+
+            if show_envelope:
+                raw_env = self._compute_envelope(self.raw_adc_values)
+                # Drop region (red/dim)
+                if drop_n > 0:
+                    self.ax.plot(raw_time_us[:drop_n], raw_env[:drop_n],
+                                 color='#ff4444', linewidth=0.7, alpha=0.6, label=f"Drop({drop_n})")
+                # Keep region (bright)
+                end = min(keep_end, len(self.raw_adc_values))
+                self.ax.plot(raw_time_us[drop_n:end], raw_env[drop_n:end],
+                             color='#00ff88', linewidth=0.8, label=f"Keep({end - drop_n})")
+                # Extra region beyond keep
+                if len(self.raw_adc_values) > end:
+                    self.ax.plot(raw_time_us[end:], raw_env[end:],
+                                 color='#aaaaaa', linewidth=0.6, alpha=0.5, label="Tail")
+                self.ax.set_ylabel("Envelope", color=text_color)
+            else:
+                if drop_n > 0:
+                    self.ax.plot(raw_time_us[:drop_n], self.raw_adc_values[:drop_n],
+                                 color='#ff4444', linewidth=0.7, alpha=0.6, label=f"Drop({drop_n})")
+                end = min(keep_end, len(self.raw_adc_values))
+                self.ax.plot(raw_time_us[drop_n:end], self.raw_adc_values[drop_n:end],
+                             color='#00bfff', linewidth=0.8, label=f"Keep({end - drop_n})")
+                if len(self.raw_adc_values) > end:
+                    self.ax.plot(raw_time_us[end:], self.raw_adc_values[end:],
+                                 color='#aaaaaa', linewidth=0.6, alpha=0.5, label="Tail")
+                self.ax.set_ylabel("ADC Value", color=text_color)
+
+            self.ax.set_title(f"RAW DATA — total {len(self.raw_adc_values)} samples", color='#ffaa00')
+            self.ax.axvline(x=raw_time_us[drop_n] if drop_n < len(raw_time_us) else 0,
+                            color='yellow', linewidth=1, linestyle='--', alpha=0.7)
+            self.ax.legend(loc='upper right', fontsize=9,
+                           facecolor=bg_color, edgecolor=grid_color, labelcolor=text_color)
+            self.ax.xaxis.set_major_locator(MultipleLocator(1.0))
+            self.ax.xaxis.set_minor_locator(MultipleLocator(0.5))
+
+        elif len(self.adc_values) > 0:
             time_us = self.time_ns / 1000.0 + offset_us
+
+            # Show Drop: raw_adc_values[:drop_n]을 kept 데이터 앞에 붙여 표시
+            drop_n = self.drop_samples
+            has_drop = (self.show_drop and len(self.raw_adc_values) >= drop_n > 0)
+            if has_drop:
+                drop_time_us = (np.arange(drop_n) - drop_n) * 0.01 + time_us[0]
+                drop_data = self.raw_adc_values[:drop_n]
+                if show_envelope:
+                    drop_env = self._compute_envelope(drop_data)
+                    self.ax.plot(drop_time_us, drop_env, color='#ff6644',
+                                 linewidth=0.7, alpha=0.7, label=f"Drop({drop_n})")
+                else:
+                    self.ax.plot(drop_time_us, drop_data, color='#ff6644',
+                                 linewidth=0.7, alpha=0.7, label=f"Drop({drop_n})")
+                self.ax.axvline(x=time_us[0], color='yellow', linewidth=1,
+                                linestyle='--', alpha=0.7)
 
             if show_envelope:
                 envelope = self._compute_envelope(self.adc_values)
@@ -741,8 +873,8 @@ class ADCCaptureGUI(ctk.CTk):
                 self.ax.set_ylabel("ADC Value", color=text_color)
                 self.ax.set_title("Ultrasound RF Signal", color=text_color)
 
-            # Compare 모드에서 legend 표시
-            if self.show_compare and len(self.prev_adc_values) > 0:
+            # legend: Compare 또는 Drop 활성 시
+            if (self.show_compare and len(self.prev_adc_values) > 0) or has_drop:
                 self.ax.legend(loc='upper right', fontsize=9,
                              facecolor=bg_color, edgecolor=grid_color,
                              labelcolor=text_color)
@@ -780,6 +912,68 @@ class ADCCaptureGUI(ctk.CTk):
             self.data_info.configure(text=info)
         else:
             self.data_info.configure(text="No Data")
+
+    def _toggle_debug(self):
+        """Show/hide debug log panel"""
+        self.debug_visible = not self.debug_visible
+        if self.debug_visible:
+            self.debug_frame.grid(row=4, column=0, padx=15, pady=(0, 5), sticky="ew")
+            self.debug_btn.configure(text="Debug ▲")
+        else:
+            self.debug_frame.grid_forget()
+            self.debug_btn.configure(text="Debug ▼")
+            # 패널 닫을 때 drop 오버레이 끄기
+            if self.show_drop:
+                self.show_drop = False
+                self.drop_toggle_btn.configure(text="Show Drop", fg_color="#e67e22")
+                self._update_graph()
+
+    def _append_log(self, text: str):
+        """Append text to log panel"""
+        self.log_text.configure(state="normal")
+        self.log_text.insert("end", text)
+        self.log_text.see("end")
+        self.log_text.configure(state="disabled")
+
+    def _clear_log(self):
+        """Clear log panel"""
+        self.log_text.configure(state="normal")
+        self.log_text.delete("1.0", "end")
+        self.log_text.configure(state="disabled")
+
+    def _toggle_raw(self):
+        """Toggle raw (untrimmed) data view in graph"""
+        self.show_raw = not self.show_raw
+        if self.show_raw:
+            self.raw_toggle_btn.configure(text="Show Trim", fg_color="#0d8da6")
+        else:
+            self.raw_toggle_btn.configure(text="Show Raw", fg_color="#17a2b8")
+        self._update_graph()
+
+    def _toggle_drop(self):
+        """Toggle drop region overlay on normal graph"""
+        self.show_drop = not self.show_drop
+        if self.show_drop:
+            self.drop_toggle_btn.configure(text="Hide Drop", fg_color="#c0392b")
+        else:
+            self.drop_toggle_btn.configure(text="Show Drop", fg_color="#e67e22")
+        self._update_graph()
+
+    def _save_raw_data(self):
+        """Save raw (untrimmed) data to CSV"""
+        if len(self.raw_adc_values) == 0:
+            messagebox.showwarning("Warning", "No raw data")
+            return
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            initialfile="raw_debug.csv"
+        )
+        if filepath:
+            raw_time = np.arange(len(self.raw_adc_values)) * 10
+            save_to_csv(filepath, raw_time, self.raw_adc_values)
+            self.progress_label.configure(text=f"Raw saved: {os.path.basename(filepath)}")
+
 
     def _clear_graph(self):
         """Clear graph and data"""

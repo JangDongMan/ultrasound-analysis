@@ -11,6 +11,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import os
 import json
+import re
 
 import numpy as np
 from scipy.signal import hilbert
@@ -56,6 +57,11 @@ TRIM_START = 1200       # Discard first 1200 samples (12.00 μs)
 TRIM_COUNT = 1250       # Keep next 1250 samples (~10mm at 1540 m/s)
 DISPLAY_OFFSET_US = 12.00  # Time offset for display (μs)
 
+# Filename pattern: 이름_날짜_시간_(번호)부위_성별.csv
+FILENAME_RE = re.compile(
+    r'^(?P<name>.+)_(?P<date>\d{8})_(?P<time>\d{6})_'
+    r'\((?P<pos_num>\d+)\)(?P<position>.+?)_(?P<gender>[MF])\.csv$'
+)
 
 ctk.set_default_color_theme("blue")
 
@@ -88,6 +94,10 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.file_list = []
         self.file_index = -1
 
+        # Same-position navigation (cross-patient, same pos_num)
+        self.same_pos_list = []
+        self.same_pos_index = -1
+
         # Previous file data for compare overlay
         self.prev_adc_values = np.array([])
         self.prev_time_us = np.array([])
@@ -107,12 +117,20 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.dermis_us = None
         self.fascia_us = None
         self.json_path = None  # Track loaded/saved JSON path
+        self.auto_epi_mm = None  # 자동 검출 표피두께 (analyze_epidermis.py와 동일 로직)
 
         # Marker mode: "start" → "dermis" → "fascia"
         self.marker_mode = "start"
 
         # Envelope toggle (default: ON)
         self.show_envelope = True
+        self.envelope_window = 8        # 이동평균 반폭 (±샘플)
+        self.envelope_mode  = "mavg"    # "mavg" | "hilbert"
+
+        # X-axis zoom (1.0 = full view, 0.5 = half width)
+        self.xzoom = 1.0
+        self.xzoom_end_us = None   # right edge of zoomed view (None = default)
+        self._triangle_drag = False
 
         # Cursor tracking line and annotation
         self.cursor_line = None
@@ -149,18 +167,18 @@ class BoundaryMarkerGUI(ctk.CTk):
 
         file_frame.grid_columnconfigure(2, weight=1)
 
-        ctk.CTkButton(file_frame, text="Set Folder", width=90,
-                      fg_color="#17a2b8", hover_color="#138496",
-                      command=self._set_save_folder).grid(
+        ctk.CTkButton(file_frame, text="Data Root", width=90,
+                      fg_color="#6f42c1", hover_color="#59359a",
+                      command=self._set_data_root).grid(
             row=0, column=3, padx=5, pady=10)
 
-        self.folder_label = ctk.CTkLabel(file_frame, text="Save: (CSV folder)",
-                                         font=ctk.CTkFont(size=11), text_color="gray")
-        self.folder_label.grid(row=0, column=4, padx=5, pady=10, sticky="w")
-        if self.config.save_directory:
-            self.folder_label.configure(
-                text=f"Save: {self.config.save_directory}",
-                text_color="#17a2b8")
+        self.data_root_label = ctk.CTkLabel(file_frame, text="Root: (미설정)",
+                                             font=ctk.CTkFont(size=11), text_color="gray")
+        self.data_root_label.grid(row=0, column=4, padx=5, pady=10, sticky="w")
+        if self.config.data_root:
+            self.data_root_label.configure(
+                text=f"Root: {self.config.data_root}",
+                text_color="#b388ff")
 
         file_frame.grid_columnconfigure(4, weight=0)
 
@@ -212,6 +230,19 @@ class BoundaryMarkerGUI(ctk.CTk):
             command=self._load_next_file, state="disabled")
         self.next_btn.grid(row=0, column=2, padx=(2, 6), pady=6, sticky="ns")
 
+        # Same-position navigation (cross-patient, same pos_num)
+        self.same_pos_prev_btn = ctk.CTkButton(
+            graph_frame, text="◀◀\n동부위", width=48, font=ctk.CTkFont(size=11),
+            fg_color="#2d6a4f", hover_color="#1b4332",
+            command=self._load_same_pos_prev, state="disabled")
+        self.same_pos_prev_btn.grid(row=1, column=0, padx=(6, 2), pady=(2, 6), sticky="ew")
+
+        self.same_pos_next_btn = ctk.CTkButton(
+            graph_frame, text="동부위\n▶▶", width=48, font=ctk.CTkFont(size=11),
+            fg_color="#2d6a4f", hover_color="#1b4332",
+            command=self._load_same_pos_next, state="disabled")
+        self.same_pos_next_btn.grid(row=1, column=2, padx=(2, 6), pady=(2, 6), sticky="ew")
+
         # Connect mouse events
         # press: record position, release: place marker if no drag (zoom/pan compatible)
         self._press_pos = None
@@ -240,7 +271,7 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.start_radio.grid(row=0, column=1, padx=8)
 
         self.dermis_radio = ctk.CTkRadioButton(
-            mode_frame, text="Dermis", variable=self.mode_var,
+            mode_frame, text="피하지방시작", variable=self.mode_var,
             value="dermis", command=self._on_mode_change,
             fg_color="#ff4444", hover_color="#cc3333")
         self.dermis_radio.grid(row=0, column=2, padx=8)
@@ -266,11 +297,37 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.envelope_switch.grid(row=0, column=1, padx=5)
         self.envelope_switch.select()  # default ON
 
-        ctk.CTkLabel(toggle_frame, text="Dark:").grid(row=0, column=2, padx=(15, 5))
+        # 엔벨로프 방식 선택: MA / Hilbert 세그먼트 버튼
+        self.env_mode_var = ctk.StringVar(value="mavg")
+        self.btn_mavg = ctk.CTkSegmentedButton(
+            toggle_frame,
+            values=["MA", "Hilbert"],
+            variable=self.env_mode_var,
+            command=self._on_env_mode_changed,
+            width=110, height=26,
+        )
+        self.btn_mavg.grid(row=0, column=2, padx=(10, 4))
+
+        # MA 전용: -/+ 버튼 + 숫자 입력
+        self.mavg_frame = ctk.CTkFrame(toggle_frame, fg_color="transparent")
+        self.mavg_frame.grid(row=0, column=3, padx=(0, 0))
+        self.btn_minus = ctk.CTkButton(self.mavg_frame, text="-", width=26, height=26,
+                                       command=lambda: self._step_window(-1))
+        self.btn_minus.grid(row=0, column=0, padx=(2, 0))
+        self.window_entry = ctk.CTkEntry(self.mavg_frame, width=40, justify="center")
+        self.window_entry.insert(0, str(self.envelope_window))
+        self.window_entry.grid(row=0, column=1, padx=1)
+        self.window_entry.bind("<Return>",   self._on_window_changed)
+        self.window_entry.bind("<FocusOut>", self._on_window_changed)
+        self.btn_plus = ctk.CTkButton(self.mavg_frame, text="+", width=26, height=26,
+                                      command=lambda: self._step_window(+1))
+        self.btn_plus.grid(row=0, column=2, padx=(0, 2))
+
+        ctk.CTkLabel(toggle_frame, text="Dark:").grid(row=0, column=4, padx=(15, 5))
         self.theme_switch = ctk.CTkSwitch(toggle_frame, text="",
                                           command=self._toggle_theme,
                                           width=40)
-        self.theme_switch.grid(row=0, column=3, padx=5)
+        self.theme_switch.grid(row=0, column=5, padx=5)
         if self.config.theme == "dark":
             self.theme_switch.select()
 
@@ -296,30 +353,60 @@ class BoundaryMarkerGUI(ctk.CTk):
         sep3 = ctk.CTkFrame(ctrl_frame, width=2, fg_color="gray")
         sep3.grid(row=0, column=6, padx=5, pady=8, sticky="ns")
 
-        # Right: marker info
+        # X-Zoom slider
+        zoom_frame = ctk.CTkFrame(ctrl_frame, fg_color="transparent")
+        zoom_frame.grid(row=0, column=7, padx=(8, 4), pady=10)
+
+        ctk.CTkLabel(zoom_frame, text="X-Zoom:",
+                     font=ctk.CTkFont(size=12)).grid(row=0, column=0, padx=(0, 4))
+
+        self.xzoom_slider = ctk.CTkSlider(
+            zoom_frame, from_=50, to=100, number_of_steps=50,
+            width=130, command=self._on_xzoom_changed)
+        self.xzoom_slider.set(100)  # 우측 = 전체보기 (기본값)
+        self.xzoom_slider.grid(row=0, column=1, padx=4)
+
+        self.xzoom_pct_label = ctk.CTkLabel(
+            zoom_frame, text="100%", width=38,
+            font=ctk.CTkFont(size=11))
+        self.xzoom_pct_label.grid(row=0, column=2, padx=(0, 2))
+
+        ctk.CTkButton(
+            zoom_frame, text="1:1", width=36, height=26,
+            fg_color="#495057", hover_color="#343a40",
+            command=self._reset_xzoom).grid(row=0, column=3, padx=(0, 4))
+
+        ctrl_frame.grid_columnconfigure(8, weight=1)
+
+        # Row 1: marker info (always visible, spans full width)
         info_frame = ctk.CTkFrame(ctrl_frame, fg_color="transparent")
-        info_frame.grid(row=0, column=7, padx=15, pady=10, sticky="e")
-        ctrl_frame.grid_columnconfigure(7, weight=1)
+        info_frame.grid(row=1, column=0, columnspan=9, padx=10, pady=(0, 6), sticky="ew")
 
         self.start_info = ctk.CTkLabel(
             info_frame, text="Start: --",
             font=ctk.CTkFont(size=13), text_color="#ffaa00")
-        self.start_info.grid(row=0, column=0, padx=10, sticky="e")
+        self.start_info.grid(row=0, column=0, padx=10, sticky="w")
 
         self.dermis_info = ctk.CTkLabel(
-            info_frame, text="Dermis: --",
+            info_frame, text="피하지방시작: --",
             font=ctk.CTkFont(size=13), text_color="#ff6666")
-        self.dermis_info.grid(row=0, column=1, padx=10, sticky="e")
+        self.dermis_info.grid(row=0, column=1, padx=10, sticky="w")
 
         self.fascia_info = ctk.CTkLabel(
             info_frame, text="Fascia: --",
             font=ctk.CTkFont(size=13), text_color="#6699ff")
-        self.fascia_info.grid(row=0, column=2, padx=10, sticky="e")
+        self.fascia_info.grid(row=0, column=2, padx=10, sticky="w")
 
         self.gap_info = ctk.CTkLabel(
             info_frame, text="Gap: --",
             font=ctk.CTkFont(size=13), text_color="#aaaaaa")
-        self.gap_info.grid(row=0, column=3, padx=10, sticky="e")
+        self.gap_info.grid(row=0, column=3, padx=10, sticky="w")
+
+        # 표피두께: 자동 검출 (analyze_epidermis.py 동일 로직)
+        self.epi_info = ctk.CTkLabel(
+            info_frame, text="표피두께: --",
+            font=ctk.CTkFont(size=15, weight="bold"), text_color="#00e676")
+        self.epi_info.grid(row=0, column=4, padx=20, sticky="w")
 
         # ===== Row 4: Status bar (cursor distance + status) =====
         status_frame = ctk.CTkFrame(self, corner_radius=10, height=30)
@@ -344,15 +431,18 @@ class BoundaryMarkerGUI(ctk.CTk):
 
     # ---- File I/O ----
 
-    def _set_save_folder(self):
-        """Set save directory for JSON files"""
-        initial_dir = self.config.save_directory or self.config.last_open_dir or os.getcwd()
+    def _set_data_root(self):
+        """Set root data directory for cross-patient navigation"""
+        initial_dir = self.config.data_root or self.config.last_open_dir or os.getcwd()
         folder = filedialog.askdirectory(initialdir=initial_dir,
-                                         title="Select Save Folder for JSON")
+                                         title="최상위 데이터 폴더 선택 (예: usdata/)")
         if folder:
-            self.config.update(save_directory=folder)
-            self.folder_label.configure(text=f"Save: {folder}", text_color="#17a2b8")
-            self.status_label.configure(text=f"Save folder: {folder}")
+            self.config.update(data_root=folder)
+            self.data_root_label.configure(text=f"Root: {folder}", text_color="#b388ff")
+            self.status_label.configure(text=f"Data root: {folder}")
+            # Rebuild same-pos list with new root
+            if self.filepath:
+                self._build_same_pos_list()
 
     def _open_csv(self):
         initial_dir = self.config.last_open_dir or os.getcwd()
@@ -384,6 +474,7 @@ class BoundaryMarkerGUI(ctk.CTk):
         # Reset display shift on new file load
         self.display_shift_us = 0.0
         self.reset_shift_btn.configure(state="disabled")
+        self.xzoom_end_us = None  # 줌 위치 초기화
 
         # Clear markers
         self.start_us = None
@@ -392,12 +483,21 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.mode_var.set("start")
         self.marker_mode = "start"
 
+        # 자동 검출: T0(표피 시작)
+        auto_t0, auto_epi_mm = self._auto_detect_t0(adc_arr, time_us)
+        self.auto_epi_mm = auto_epi_mm
+
         # Check for existing JSON
         self.json_path = self._get_json_path(filepath)
         if os.path.exists(self.json_path):
             self._load_existing_json(self.json_path)
         else:
             self.json_path = None
+            # JSON 없을 때만 자동 T0를 초기 시작점으로 설정
+            if auto_t0 is not None:
+                self.start_us = auto_t0
+                self.mode_var.set("dermis")
+                self.marker_mode = "dermis"
 
         # Update config
         self.config.update(last_open_dir=os.path.dirname(filepath))
@@ -480,14 +580,10 @@ class BoundaryMarkerGUI(ctk.CTk):
         return adc_arr, time_us
 
     def _get_json_path(self, csv_path):
-        """Get JSON output path (save_directory if set, else same dir as CSV)"""
+        """Get JSON output path — always same directory as CSV"""
         csv_name = os.path.basename(csv_path)
         base_name = os.path.splitext(csv_name)[0] + "_positions.json"
-
-        if self.config.save_directory:
-            return os.path.join(self.config.save_directory, base_name)
-        else:
-            return os.path.join(os.path.dirname(csv_path), base_name)
+        return os.path.join(os.path.dirname(csv_path), base_name)
 
     def _load_existing_json(self, json_path):
         """Load previously saved markers from JSON"""
@@ -501,7 +597,7 @@ class BoundaryMarkerGUI(ctk.CTk):
                 name = pos.get('position_name', '')
                 time_val = pos.get('time_us')
                 if time_val is not None:
-                    if name == 'Dermis':
+                    if name in ('Dermis', '피하지방시작'):
                         self.dermis_us = time_val
                     elif name == 'Fascia':
                         self.fascia_us = time_val
@@ -573,7 +669,7 @@ class BoundaryMarkerGUI(ctk.CTk):
             name = pos.get('position_name', '')
             time_val = pos.get('time_us')
             if time_val is not None:
-                if name == 'Dermis':
+                if name in ('Dermis', '피하지방시작'):
                     self.dermis_us = time_val
                 elif name == 'Fascia':
                     self.fascia_us = time_val
@@ -646,11 +742,15 @@ class BoundaryMarkerGUI(ctk.CTk):
 
         if status:
             self.status_label.configure(text=status)
+        elif self.marker_mode == "dermis":
+            self.status_label.configure(
+                text=f"Loaded: {filename} - T0 자동 설정됨, 클릭하여 피하지방시작 마킹")
         else:
             self.status_label.configure(
                 text=f"Loaded: {filename} - Click to mark Start point")
 
         self._build_file_list()
+        self._build_same_pos_list()
         self._update_nav_buttons()
         self._update_graph()
         self._update_marker_info()
@@ -686,6 +786,150 @@ class BoundaryMarkerGUI(ctk.CTk):
             state="normal" if self.file_index < total - 1 else "disabled",
             text=f"▶\nNext\n[{self.file_index + 2}/{total}]" if self.file_index < total - 1
                  else "▶\nNext")
+
+    def _build_same_pos_list(self):
+        """Build list of files with same position number (cross-patient navigation)"""
+        self.same_pos_list = []
+        self.same_pos_index = -1
+        if not self.filepath:
+            self._update_same_pos_nav_buttons()
+            return
+
+        basename = os.path.basename(self.filepath)
+        m = FILENAME_RE.match(basename)
+        if not m:
+            self._update_same_pos_nav_buttons()
+            return
+
+        pos_num = int(m.group('pos_num'))
+
+        # Use configured data_root; fall back to 3-levels-up heuristic
+        if self.config.data_root and os.path.isdir(self.config.data_root):
+            search_root = os.path.abspath(self.config.data_root)
+        else:
+            search_root = os.path.abspath(os.path.dirname(self.filepath))
+            for _ in range(3):
+                parent = os.path.dirname(search_root)
+                if parent == search_root:
+                    break
+                search_root = parent
+
+        # Collect all CSVs with the same position number
+        same_pos = []
+        for dirpath, _, filenames in os.walk(search_root):
+            for filename in filenames:
+                if not filename.lower().endswith('.csv'):
+                    continue
+                m2 = FILENAME_RE.match(filename)
+                if m2 and int(m2.group('pos_num')) == pos_num:
+                    same_pos.append(os.path.join(dirpath, filename))
+
+        same_pos.sort()
+        self.same_pos_list = same_pos
+        abs_path = os.path.abspath(self.filepath)
+        try:
+            self.same_pos_index = same_pos.index(abs_path)
+        except ValueError:
+            self.same_pos_index = -1
+
+        self._update_same_pos_nav_buttons()
+
+    def _update_same_pos_nav_buttons(self):
+        """Enable/disable same-position navigation buttons"""
+        if not hasattr(self, 'same_pos_prev_btn'):
+            return
+        if not self.same_pos_list or self.same_pos_index < 0:
+            self.same_pos_prev_btn.configure(state="disabled", text="◀◀\n동부위")
+            self.same_pos_next_btn.configure(state="disabled", text="동부위\n▶▶")
+            return
+        total = len(self.same_pos_list)
+        idx = self.same_pos_index
+        self.same_pos_prev_btn.configure(
+            state="normal" if idx > 0 else "disabled",
+            text=f"◀◀\n동부위\n[{idx}/{total}]" if idx > 0 else "◀◀\n동부위")
+        self.same_pos_next_btn.configure(
+            state="normal" if idx < total - 1 else "disabled",
+            text=f"동부위\n▶▶\n[{idx + 2}/{total}]" if idx < total - 1 else "동부위\n▶▶")
+
+    def _load_same_pos_prev(self):
+        """Load previous patient's file with same position number"""
+        if self.same_pos_index <= 0:
+            return
+        self._load_same_pos_at_index(self.same_pos_index - 1)
+
+    def _load_same_pos_next(self):
+        """Load next patient's file with same position number"""
+        if self.same_pos_index >= len(self.same_pos_list) - 1:
+            return
+        self._load_same_pos_at_index(self.same_pos_index + 1)
+
+    def _load_same_pos_at_index(self, idx):
+        """Load a same-position file at given index"""
+        filepath = self.same_pos_list[idx]
+        try:
+            adc_arr, time_us = self._load_csv(filepath)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load CSV:\n{e}")
+            return
+
+        if len(self.adc_values) > 0:
+            self.prev_adc_values = self.adc_values.copy()
+            self.prev_time_us = self.time_us.copy()
+            self.prev_filepath = self.filepath
+            self.compare_btn.configure(state="normal")
+
+        self.filepath = filepath
+        self.adc_values = adc_arr
+        self.time_us = time_us
+        self.display_shift_us = 0.0
+        self.reset_shift_btn.configure(state="disabled")
+
+        self.start_us = None
+        self.dermis_us = None
+        self.fascia_us = None
+        self.mode_var.set("start")
+        self.marker_mode = "start"
+
+        auto_t0, auto_epi_mm = self._auto_detect_t0(adc_arr, time_us)
+        self.auto_epi_mm = auto_epi_mm
+
+        self.json_path = self._get_json_path(filepath)
+        if os.path.exists(self.json_path):
+            self._load_existing_json(self.json_path)
+        else:
+            self.json_path = None
+            if auto_t0 is not None:
+                self.start_us = auto_t0
+                self.mode_var.set("dermis")
+                self.marker_mode = "dermis"
+
+        self.same_pos_index = idx
+        self.config.update(last_open_dir=os.path.dirname(filepath))
+
+        filename = os.path.basename(filepath)
+        self.file_label.configure(text=filename)
+        self.save_btn.configure(state="normal")
+        self.clear_btn.configure(state="normal")
+
+        s_us = self.time_us[0] if len(self.time_us) > 0 else 0
+        e_us = self.time_us[-1] if len(self.time_us) > 0 else 0
+        self.data_info.configure(
+            text=f"Samples: {len(self.adc_values)} | "
+                 f"{s_us:.1f}~{e_us:.1f} us | "
+                 f"Min: {np.min(self.adc_values)} | Max: {np.max(self.adc_values)}")
+
+        total = len(self.same_pos_list)
+        m = FILENAME_RE.match(filename)
+        pos_info = f" #pos{m.group('pos_num')}" if m else ""
+        mode_hint = "클릭하여 피하지방시작 마킹" if self.marker_mode == "dermis" else "Click to mark Start"
+        self.status_label.configure(
+            text=f"[동부위 {idx + 1}/{total}]{pos_info} {filename} - {mode_hint}")
+
+        self._build_file_list()
+        self._update_nav_buttons()
+        self._update_same_pos_nav_buttons()
+        self._update_graph()
+        self._update_marker_info()
 
     def _load_prev_file(self):
         """Load previous CSV file in directory"""
@@ -732,12 +976,21 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.mode_var.set("start")
         self.marker_mode = "start"
 
+        # 자동 검출: T0(표피 시작)
+        auto_t0, auto_epi_mm = self._auto_detect_t0(adc_arr, time_us)
+        self.auto_epi_mm = auto_epi_mm
+
         # Check for existing JSON
         self.json_path = self._get_json_path(filepath)
         if os.path.exists(self.json_path):
             self._load_existing_json(self.json_path)
         else:
             self.json_path = None
+            # JSON 없을 때만 자동 T0를 초기 시작점으로 설정
+            if auto_t0 is not None:
+                self.start_us = auto_t0
+                self.mode_var.set("dermis")
+                self.marker_mode = "dermis"
 
         self.config.update(last_open_dir=os.path.dirname(filepath))
 
@@ -754,8 +1007,10 @@ class BoundaryMarkerGUI(ctk.CTk):
                  f"Min: {np.min(self.adc_values)} | Max: {np.max(self.adc_values)}")
 
         total = len(self.file_list)
+        mode_hint = "클릭하여 피하지방시작 마킹" if self.marker_mode == "dermis" else "Click to mark Start point"
         self.status_label.configure(
-            text=f"[{idx + 1}/{total}] {filename} - Click to mark Start point")
+            text=f"[{idx + 1}/{total}] {filename} - {mode_hint}")
+        self._build_same_pos_list()
         self._update_nav_buttons()
         self._update_graph()
         self._update_marker_info()
@@ -816,7 +1071,7 @@ class BoundaryMarkerGUI(ctk.CTk):
             "positions": [
                 {
                     "position_number": 1,
-                    "position_name": "Dermis",
+                    "position_name": "피하지방시작",
                     "time_us": round(self.dermis_us, 4),
                     "thickness_mm": round(dermis_mm, 4),
                     "depth_start_mm": 0.0,
@@ -869,7 +1124,7 @@ class BoundaryMarkerGUI(ctk.CTk):
                 prev_name = os.path.basename(self.prev_filepath) if self.prev_filepath else "Prev"
                 prev_xdata = self.prev_time_us + shift
                 if self.show_envelope:
-                    prev_env = self._compute_envelope(self.prev_adc_values)
+                    prev_env = self._compute_envelope(self.prev_adc_values, self.envelope_window)
                     self._prev_plot_line = self.ax.plot(
                         prev_xdata, prev_env,
                         color='#ff4444', linewidth=0.8, alpha=0.6,
@@ -882,7 +1137,7 @@ class BoundaryMarkerGUI(ctk.CTk):
 
             # Current file: FIXED (no shift) — markers placed here directly
             if self.show_envelope:
-                envelope = self._compute_envelope(self.adc_values)
+                envelope = self._compute_envelope(self.adc_values, self.envelope_window)
                 line_color = '#00ff88' if is_dark else '#28a745'
                 curr_name = os.path.basename(self.filepath) if self.filepath else "Current"
                 self.ax.plot(self.time_us, envelope, color=line_color, linewidth=0.8,
@@ -908,16 +1163,42 @@ class BoundaryMarkerGUI(ctk.CTk):
             has_legend = self.show_compare and len(self.prev_adc_values) > 0
             if self.start_us is not None:
                 self.ax.axvline(x=self.start_us, color='#ffaa00', linewidth=2,
-                               linestyle='-', label='Start', alpha=0.9)
+                               linestyle='-', label='표피시작(T0)', alpha=0.9)
                 has_legend = True
             if self.dermis_us is not None:
                 self.ax.axvline(x=self.dermis_us, color='#ff4444', linewidth=2,
-                               linestyle='--', label='Dermis', alpha=0.9)
+                               linestyle='--', label='피하지방시작', alpha=0.9)
                 has_legend = True
             if self.fascia_us is not None:
                 self.ax.axvline(x=self.fascia_us, color='#4488ff', linewidth=2,
-                               linestyle='--', label='Fascia', alpha=0.9)
+                               linestyle='--', label='근막', alpha=0.9)
                 has_legend = True
+
+            # Marker callout annotations (blended transform: x=data, y=axes fraction)
+            _speed = self.config.speed_of_sound
+            _trans = self.ax.get_xaxis_transform()
+            if self.dermis_us is not None and self.start_us is not None:
+                d_us = self.dermis_us - self.start_us
+                dmm = d_us * _speed / 2000.0
+                self.ax.annotate(
+                    f"피하지방시작\n{d_us:.2f} μs\n{dmm:.2f} mm",
+                    xy=(self.dermis_us, 0.28), xytext=(self.dermis_us, 0.68),
+                    xycoords=_trans, textcoords=_trans,
+                    arrowprops=dict(arrowstyle='->', color='#ff6666', lw=1.5),
+                    ha='center', va='center', fontsize=9, color='white',
+                    bbox=dict(boxstyle='round,pad=0.5',
+                              facecolor='#881111', edgecolor='#ff4444', alpha=0.88))
+            if self.fascia_us is not None and self.start_us is not None:
+                f_us = self.fascia_us - self.start_us
+                fmm = f_us * _speed / 2000.0
+                self.ax.annotate(
+                    f"Fascia\n{f_us:.2f} μs\n{fmm:.2f} mm",
+                    xy=(self.fascia_us, 0.28), xytext=(self.fascia_us, 0.68),
+                    xycoords=_trans, textcoords=_trans,
+                    arrowprops=dict(arrowstyle='->', color='#6699ff', lw=1.5),
+                    ha='center', va='center', fontsize=9, color='white',
+                    bbox=dict(boxstyle='round,pad=0.5',
+                              facecolor='#113388', edgecolor='#4488ff', alpha=0.88))
 
             if has_legend:
                 self.ax.legend(loc='upper right', fontsize=8,
@@ -928,6 +1209,12 @@ class BoundaryMarkerGUI(ctk.CTk):
             self.ax.xaxis.set_major_locator(MultipleLocator(1.0))
             self.ax.xaxis.set_minor_locator(MultipleLocator(0.5))
             self.ax.tick_params(axis='x', which='minor', length=3)
+
+            # Apply X-axis zoom (Y-axis untouched)
+            xlims = self._get_xzoom_limits()
+            if xlims:
+                self.ax.set_xlim(*xlims)
+                pass  # zoom out: no triangle needed
         else:
             self.ax.set_xlim(DISPLAY_OFFSET_US,
                             DISPLAY_OFFSET_US + (TRIM_COUNT - 1) * 0.01)
@@ -940,10 +1227,83 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.cursor_annot = None
         self.canvas.draw()
 
-    def _compute_envelope(self, signal):
-        signal_centered = signal - np.mean(signal)
-        analytic_signal = hilbert(signal_centered)
-        return np.abs(analytic_signal)
+    # ---- X-axis zoom ----
+
+    def _get_xzoom_limits(self):
+        """현재 xzoom 설정에 따른 X축 표시 범위 반환. 데이터 없으면 None."""
+        if len(self.adc_values) == 0:
+            return None
+        full_min = float(self.time_us[0])
+        full_max = float(self.time_us[-1])
+        if self.xzoom <= 1.0:
+            return full_min, full_max
+        # zoom out: xlim을 데이터 범위보다 넓게 설정 → 신호가 압축되어 보임
+        full_w = full_max - full_min
+        total_w = full_w * self.xzoom
+        return full_min, full_min + total_w
+
+    def _on_xzoom_changed(self, value):
+        """슬라이더 콜백 — value: 50(좌/줌아웃 50%)~100(우/전체보기 100%)
+        슬라이더 우측 = 1.0x 전체보기, 좌측 = xlim 2배 확장(신호 50% 압축)"""
+        self.xzoom = 100.0 / value          # 100→1.0(전체), 50→2.0(50% 축소)
+        self.xzoom_end_us = None
+        self.xzoom_pct_label.configure(text=f"{int(value)}%")
+        self._update_graph()
+
+    def _reset_xzoom(self):
+        """X-zoom 100%(전체 보기)로 초기화"""
+        self.xzoom = 1.0
+        self.xzoom_end_us = None
+        self.xzoom_slider.set(100)  # 우측 = 전체보기
+        self.xzoom_pct_label.configure(text="100%")
+        self._update_graph()
+
+    def _auto_detect_t0(self, adc, time_us):
+        """표피 시작(T0) 자동 검출.
+
+        Returns:
+            (t0_us, epi_mm) — 검출 실패 시 (None, None)
+            analyze_epidermis.py와 동일 로직: 첫 클러스터 시작=T0, 끝=표피경계
+        """
+        THRESHOLD      = 100
+        MIN_CLUSTER_W  = 10
+
+        s   = adc.astype(float) - 128.0
+        env = np.abs(hilbert(s))
+
+        # 클러스터 검출 (envelope >= THRESHOLD 구간)
+        clusters, in_c, cs = [], False, 0
+        for i, v in enumerate(env >= THRESHOLD):
+            if v and not in_c:
+                in_c, cs = True, i
+            elif not v and in_c:
+                in_c = False
+                if i - 1 - cs >= MIN_CLUSTER_W:
+                    clusters.append((cs, i - 1))
+        if in_c and len(env) - 1 - cs >= MIN_CLUSTER_W:
+            clusters.append((cs, len(env) - 1))
+
+        if not clusters:
+            return None, None
+
+        # T0 = 첫 번째 클러스터 시작, 표피끝 = 첫 번째 클러스터 끝
+        t0_us_val  = float(time_us[clusters[0][0]])
+        epi_end_us = float(time_us[clusters[0][1]])
+        epi_mm     = (epi_end_us - t0_us_val) * self.config.speed_of_sound / 2000.0
+        return t0_us_val, epi_mm
+
+    def _compute_envelope(self, signal, window: int = 3):
+        """엔벨로프 계산
+        MA     : |ADC-128| → 이동평균(±window)  
+        Hilbert: |hilbert(ADC-mean)|             
+        """
+        if self.envelope_mode == "hilbert":
+            s = signal.astype(float) - np.mean(signal)
+            return np.abs(hilbert(s))
+        # MA (기본)
+        rectified = np.abs(signal.astype(float) - 128.0)
+        kernel = np.ones(2 * window + 1) / (2 * window + 1)
+        return np.convolve(rectified, kernel, mode='same')
 
     def _fast_shift_redraw(self):
         """Shift only the previous (red) signal line — current signal and markers stay fixed."""
@@ -974,6 +1334,25 @@ class BoundaryMarkerGUI(ctk.CTk):
 
     def _on_press(self, event):
         """Record press position to distinguish click vs drag"""
+        self._triangle_drag = False
+
+        # X축 끝 삼각형 드래그 (zoom out 모드에서는 사용 안 함)
+        if False and event.button == 1 and self.xzoom < 1.0 and len(self.adc_values) > 0:
+            xlims = self._get_xzoom_limits()
+            if xlims:
+                try:
+                    x_end_disp, _ = self.ax.transData.transform((xlims[1], 0))
+                    ax_bottom = self.ax.bbox.y0
+                    # 삼각형 위치: x축 끝 ±20px, 축 하단 ±40px
+                    if abs(event.x - x_end_disp) < 20 and ax_bottom - 50 < event.y < ax_bottom + 10:
+                        self._triangle_drag = True
+                        self._press_pos = None
+                        self._is_shift_drag = False
+                        self._drag_start_xdata = None
+                        return
+                except Exception:
+                    pass
+
         if event.inaxes == self.ax and event.button == 1:
             self._press_pos = (event.x, event.y)
             self._is_shift_drag = False
@@ -990,6 +1369,12 @@ class BoundaryMarkerGUI(ctk.CTk):
 
     def _on_release(self, event):
         """Place marker on click (not drag). Works even when zoomed."""
+        # 삼각형 드래그 종료
+        was_triangle_drag = self._triangle_drag
+        self._triangle_drag = False
+        if was_triangle_drag:
+            return
+
         was_shift_drag = self._is_shift_drag
         self._is_shift_drag = False
         self._drag_start_xdata = None
@@ -1019,12 +1404,12 @@ class BoundaryMarkerGUI(ctk.CTk):
             self.start_us = time_us
             self.mode_var.set("dermis")
             self.marker_mode = "dermis"
-            self.status_label.configure(text="Start set - Click to mark Dermis")
+            self.status_label.configure(text="Start set - 클릭하여 피하지방시작 마킹")
         elif self.marker_mode == "dermis":
             self.dermis_us = time_us
             self.mode_var.set("fascia")
             self.marker_mode = "fascia"
-            self.status_label.configure(text="Dermis set - Click to mark Fascia")
+            self.status_label.configure(text="피하지방시작 set - Click to mark Fascia")
         elif self.marker_mode == "fascia":
             self.fascia_us = time_us
             self.status_label.configure(text="Fascia set - All markers placed. Save when ready.")
@@ -1034,6 +1419,22 @@ class BoundaryMarkerGUI(ctk.CTk):
 
     def _on_mouse_move(self, event):
         """Show distance from start point as cursor moves (status bar + on-graph annotation)"""
+        # ---- X축 끝 삼각형 드래그 (줌 윈도우 이동) ----
+        if self._triangle_drag and len(self.adc_values) > 0:
+            # event.xdata가 없으면 display coords에서 변환
+            xdata = event.xdata
+            if xdata is None:
+                try:
+                    xdata, _ = self.ax.transData.inverted().transform((event.x, 0))
+                except Exception:
+                    return
+            full_min = float(self.time_us[0])
+            full_max = float(self.time_us[-1])
+            zoomed_w = (full_max - full_min) * self.xzoom
+            self.xzoom_end_us = max(full_min + zoomed_w, min(xdata, full_max))
+            self._update_graph()
+            return
+
         # ---- Compare-mode shift drag ----
         if (self.show_compare and
                 self._press_pos is not None and
@@ -1122,6 +1523,32 @@ class BoundaryMarkerGUI(ctk.CTk):
         self.show_envelope = self.envelope_switch.get()
         self._update_graph()
 
+    def _step_window(self, delta: int):
+        self.envelope_window = max(1, self.envelope_window + delta)
+        self.window_entry.delete(0, "end")
+        self.window_entry.insert(0, str(self.envelope_window))
+        self._update_graph()
+
+    def _on_env_mode_changed(self, value):
+        self.envelope_mode = "hilbert" if value == "Hilbert" else "mavg"
+        state = "normal" if self.envelope_mode == "mavg" else "disabled"
+        self.btn_minus.configure(state=state)
+        self.btn_plus.configure(state=state)
+        self.window_entry.configure(state=state)
+        self._update_graph()
+
+    def _on_window_changed(self, event=None):
+        try:
+            val = int(self.window_entry.get())
+            if val < 1:
+                val = 1
+            self.envelope_window = val
+        except ValueError:
+            pass
+        self.window_entry.delete(0, "end")
+        self.window_entry.insert(0, str(self.envelope_window))
+        self._update_graph()
+
     def _toggle_theme(self):
         if self.theme_switch.get():
             ctk.set_appearance_mode("dark")
@@ -1142,7 +1569,7 @@ class BoundaryMarkerGUI(ctk.CTk):
             self.dermis_us = None
             self.mode_var.set("dermis")
             self.marker_mode = "dermis"
-            self.status_label.configure(text="Dermis cleared - Click to mark Dermis")
+            self.status_label.configure(text="피하지방시작 cleared - 클릭하여 피하지방시작 마킹")
         elif self.start_us is not None:
             self.start_us = None
             self.mode_var.set("start")
@@ -1164,9 +1591,15 @@ class BoundaryMarkerGUI(ctk.CTk):
             d_us = self.dermis_us - self.start_us
             dmm = d_us * speed / 2000.0
             self.dermis_info.configure(
-                text=f"Dermis: {d_us:.2f} us ({dmm:.2f} mm)")
+                text=f"피하지방시작: {d_us:.2f} us ({dmm:.2f} mm)")
         else:
-            self.dermis_info.configure(text="Dermis: --")
+            self.dermis_info.configure(text="피하지방시작: --")
+
+        # 표피두께: 수동 마커가 아닌 자동 검출 값 (analyze_epidermis.py와 동일)
+        if self.auto_epi_mm is not None:
+            self.epi_info.configure(text=f"표피두께: {self.auto_epi_mm:.3f} mm")
+        else:
+            self.epi_info.configure(text="표피두께: --")
 
         if self.start_us is not None and self.fascia_us is not None:
             f_us = self.fascia_us - self.start_us
@@ -1183,6 +1616,7 @@ class BoundaryMarkerGUI(ctk.CTk):
             self.gap_info.configure(text=f"Gap: {gap_mm:.2f} mm")
         else:
             self.gap_info.configure(text="Gap: --")
+
 
 
 def main():

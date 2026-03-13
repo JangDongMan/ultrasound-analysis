@@ -29,6 +29,7 @@ class MarkerConfig:
 
         self.last_open_dir: str = ""
         self.save_directory: str = ""
+        self.data_root: str = ""
         self.speed_of_sound: float = 1540.0
         self.theme: str = "dark"
 
@@ -44,6 +45,7 @@ class MarkerConfig:
 
             self.last_open_dir = data.get('last_open_dir', "")
             self.save_directory = data.get('save_directory', "")
+            self.data_root = data.get('data_root', "")
             self.speed_of_sound = data.get('speed_of_sound', 1540.0)
             self.theme = data.get('theme', "dark")
             return True
@@ -54,6 +56,7 @@ class MarkerConfig:
         data = {
             'last_open_dir': self.last_open_dir,
             'save_directory': self.save_directory,
+            'data_root': self.data_root,
             'speed_of_sound': self.speed_of_sound,
             'theme': self.theme,
         }
