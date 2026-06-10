@@ -1,0 +1,29 @@
+{
+  "source_file": "오광_20260508_170431_(33)잎술옆_우_M.csv",
+  "start_point_us": 19.05,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.22,
+    "rel_us": 6.17,
+    "depth_mm": 4.7509,
+    "amplitude": 28.68,
+    "first_prominence": 28.16,
+    "max_prominence": 32.03,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.25,
+      "thickness_mm": 1.694,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.694
+    }
+  ]
+}

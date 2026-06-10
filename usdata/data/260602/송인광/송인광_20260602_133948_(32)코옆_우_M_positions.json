@@ -1,0 +1,29 @@
+{
+  "source_file": "송인광_20260602_133948_(32)코옆_우_M.csv",
+  "start_point_us": 19.85,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.07,
+    "rel_us": 6.22,
+    "depth_mm": 4.7894,
+    "amplitude": 69.6,
+    "first_prominence": 68.52,
+    "max_prominence": 68.52,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.14,
+      "thickness_mm": 1.7633,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7633
+    }
+  ]
+}

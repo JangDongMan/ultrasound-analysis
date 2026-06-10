@@ -1,0 +1,37 @@
+{
+  "source_file": "황인홍_20260514_135338_(53)턱_좌_M.csv",
+  "start_point_us": 18.53,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.67,
+    "rel_us": 7.14,
+    "depth_mm": 5.4978,
+    "amplitude": 76.18,
+    "first_prominence": 69.28,
+    "max_prominence": 69.28,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 20.71,
+      "thickness_mm": 1.6786,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6786
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.57,
+      "thickness_mm": 3.8808,
+      "depth_start_mm": 1.6786,
+      "depth_end_mm": 3.8808
+    }
+  ]
+}

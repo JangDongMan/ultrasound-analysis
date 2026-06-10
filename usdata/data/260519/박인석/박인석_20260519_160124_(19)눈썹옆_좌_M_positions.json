@@ -1,0 +1,29 @@
+{
+  "source_file": "박인석_20260519_160124_(19)눈썹옆_좌_M.csv",
+  "start_point_us": 18.92,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.47,
+    "rel_us": 6.55,
+    "depth_mm": 5.0435,
+    "amplitude": 61.17,
+    "first_prominence": 41.65,
+    "max_prominence": 112.21,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.43,
+      "thickness_mm": 1.9327,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.9327
+    }
+  ]
+}

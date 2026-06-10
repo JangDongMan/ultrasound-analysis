@@ -1,0 +1,29 @@
+{
+  "source_file": "장동만_20260528_165606_(07)이마_좌_M.csv",
+  "start_point_us": 19.73,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.21,
+    "rel_us": 6.48,
+    "depth_mm": 4.9896,
+    "amplitude": 140.39,
+    "first_prominence": 138.69,
+    "max_prominence": 138.69,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.16,
+      "thickness_mm": 1.8711,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8711
+    }
+  ]
+}

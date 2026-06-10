@@ -1,0 +1,29 @@
+{
+  "source_file": "김수현_20260529_170012_(44)볼_좌_F.csv",
+  "start_point_us": 20.06,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.23,
+    "rel_us": 6.17,
+    "depth_mm": 4.7509,
+    "amplitude": 18.14,
+    "first_prominence": 15.77,
+    "max_prominence": 17.37,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.28,
+      "thickness_mm": 1.7094,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7094
+    }
+  ]
+}

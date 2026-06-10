@@ -1,0 +1,27 @@
+{
+  "source_file": "khchoo-5M-1.csv",
+  "start_point_us": 18.5,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.89,
+      "thickness_mm": 3.3803,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 3.3803
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.41,
+      "thickness_mm": 1.1704,
+      "depth_start_mm": 3.3803,
+      "depth_end_mm": 4.5507
+    }
+  ]
+}

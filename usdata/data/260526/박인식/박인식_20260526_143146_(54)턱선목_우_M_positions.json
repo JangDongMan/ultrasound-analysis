@@ -1,0 +1,37 @@
+{
+  "source_file": "박인식_20260526_143146_(54)턱선목_우_M.csv",
+  "start_point_us": 19.65,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.08,
+    "rel_us": 8.43,
+    "depth_mm": 6.4911,
+    "amplitude": 92.79,
+    "first_prominence": 90.0,
+    "max_prominence": 123.08,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.93,
+      "thickness_mm": 1.7556,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7556
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.73,
+      "thickness_mm": 3.9116,
+      "depth_start_mm": 1.7556,
+      "depth_end_mm": 3.9116
+    }
+  ]
+}

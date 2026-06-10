@@ -1,0 +1,37 @@
+{
+  "source_file": "송용범_20260529_103531_(58)턱선목_좌_M.csv",
+  "start_point_us": 19.82,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 27.77,
+    "rel_us": 7.95,
+    "depth_mm": 6.1215,
+    "amplitude": 41.28,
+    "first_prominence": 40.22,
+    "max_prominence": 88.41,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.16,
+      "thickness_mm": 1.8018,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8018
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.04,
+      "thickness_mm": 4.0194,
+      "depth_start_mm": 1.8018,
+      "depth_end_mm": 4.0194
+    }
+  ]
+}

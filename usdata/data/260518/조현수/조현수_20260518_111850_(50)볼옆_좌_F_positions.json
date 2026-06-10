@@ -1,0 +1,29 @@
+{
+  "source_file": "조현수_20260518_111850_(50)볼옆_좌_F.csv",
+  "start_point_us": 18.78,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.09,
+    "rel_us": 6.31,
+    "depth_mm": 4.8587,
+    "amplitude": 102.7,
+    "first_prominence": 100.87,
+    "max_prominence": 100.87,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.02,
+      "thickness_mm": 1.7248,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7248
+    }
+  ]
+}

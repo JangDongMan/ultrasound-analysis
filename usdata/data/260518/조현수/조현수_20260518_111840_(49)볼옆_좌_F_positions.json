@@ -1,0 +1,37 @@
+{
+  "source_file": "조현수_20260518_111840_(49)볼옆_좌_F.csv",
+  "start_point_us": 18.75,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.73,
+    "rel_us": 6.98,
+    "depth_mm": 5.3746,
+    "amplitude": 72.93,
+    "first_prominence": 72.77,
+    "max_prominence": 101.51,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.11,
+      "thickness_mm": 1.8172,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8172
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.99,
+      "thickness_mm": 4.0348,
+      "depth_start_mm": 1.8172,
+      "depth_end_mm": 4.0348
+    }
+  ]
+}

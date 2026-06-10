@@ -1,0 +1,29 @@
+{
+  "source_file": "김수현_20260529_165221_(04)이마_우_F.csv",
+  "start_point_us": 20.1,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.24,
+    "rel_us": 6.14,
+    "depth_mm": 4.7278,
+    "amplitude": 103.05,
+    "first_prominence": 99.6,
+    "max_prominence": 99.6,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.53,
+      "thickness_mm": 1.8711,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8711
+    }
+  ]
+}

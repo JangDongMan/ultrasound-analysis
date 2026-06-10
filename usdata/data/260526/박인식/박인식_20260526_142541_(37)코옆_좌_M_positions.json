@@ -1,0 +1,37 @@
+{
+  "source_file": "박인식_20260526_142541_(37)코옆_좌_M.csv",
+  "start_point_us": 19.66,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.64,
+    "rel_us": 6.98,
+    "depth_mm": 5.3746,
+    "amplitude": 38.6,
+    "first_prominence": 37.6,
+    "max_prominence": 70.36,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.98,
+      "thickness_mm": 1.7864,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7864
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.79,
+      "thickness_mm": 3.9501,
+      "depth_start_mm": 1.7864,
+      "depth_end_mm": 3.9501
+    }
+  ]
+}

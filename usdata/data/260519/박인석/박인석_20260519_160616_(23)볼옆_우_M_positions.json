@@ -1,0 +1,29 @@
+{
+  "source_file": "박인석_20260519_160616_(23)볼옆_우_M.csv",
+  "start_point_us": 18.94,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.15,
+    "rel_us": 6.21,
+    "depth_mm": 4.7817,
+    "amplitude": 76.02,
+    "first_prominence": 73.38,
+    "max_prominence": 73.38,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.3,
+      "thickness_mm": 1.8172,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8172
+    }
+  ]
+}

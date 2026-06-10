@@ -1,0 +1,37 @@
+{
+  "source_file": "박인석_20260519_155859_(08)이마_좌_M.csv",
+  "start_point_us": 18.87,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.38,
+    "rel_us": 6.51,
+    "depth_mm": 5.0127,
+    "amplitude": 157.2,
+    "first_prominence": 29.87,
+    "max_prominence": 165.45,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.16,
+      "thickness_mm": 1.7633,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7633
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.02,
+      "thickness_mm": 3.9655,
+      "depth_start_mm": 1.7633,
+      "depth_end_mm": 3.9655
+    }
+  ]
+}

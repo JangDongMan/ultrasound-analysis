@@ -1,0 +1,29 @@
+{
+  "source_file": "장동만_20260528_170110_(34)잎술옆_우_M.csv",
+  "start_point_us": 19.9,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.02,
+    "rel_us": 6.12,
+    "depth_mm": 4.7124,
+    "amplitude": 25.07,
+    "first_prominence": 18.35,
+    "max_prominence": 27.85,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.23,
+      "thickness_mm": 1.7941,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7941
+    }
+  ]
+}

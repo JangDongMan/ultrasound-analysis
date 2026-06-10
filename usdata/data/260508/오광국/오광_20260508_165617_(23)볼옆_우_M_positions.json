@@ -1,0 +1,37 @@
+{
+  "source_file": "오광_20260508_165617_(23)볼옆_우_M.csv",
+  "start_point_us": 18.98,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.61,
+    "rel_us": 6.63,
+    "depth_mm": 5.1051,
+    "amplitude": 160.89,
+    "first_prominence": 154.46,
+    "max_prominence": 154.46,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.15,
+      "thickness_mm": 1.6709,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6709
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.07,
+      "thickness_mm": 3.9193,
+      "depth_start_mm": 1.6709,
+      "depth_end_mm": 3.9193
+    }
+  ]
+}

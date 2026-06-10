@@ -1,0 +1,27 @@
+{
+  "source_file": "sicho-5M-3-01.csv",
+  "start_point_us": 18.5,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 25.84,
+      "thickness_mm": 5.6518,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 5.6518
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 27.52,
+      "thickness_mm": 1.2936,
+      "depth_start_mm": 5.6518,
+      "depth_end_mm": 6.9454
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "source_file": "조세일_20260528_160900_(22)볼옆_우_M.csv",
+  "start_point_us": 19.94,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.37,
+    "rel_us": 8.43,
+    "depth_mm": 6.4911,
+    "amplitude": 111.11,
+    "first_prominence": 110.05,
+    "max_prominence": 110.05,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.03,
+      "thickness_mm": 1.6093,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6093
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.98,
+      "thickness_mm": 3.8808,
+      "depth_start_mm": 1.6093,
+      "depth_end_mm": 3.8808
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "source_file": "홍충만_20260601_163907_(02)이마_우_M.csv",
+  "start_point_us": 20.16,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 27.99,
+    "rel_us": 7.83,
+    "depth_mm": 6.0291,
+    "amplitude": 154.64,
+    "first_prominence": 54.07,
+    "max_prominence": 156.3,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.4,
+      "thickness_mm": 1.7248,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7248
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.26,
+      "thickness_mm": 3.927,
+      "depth_start_mm": 1.7248,
+      "depth_end_mm": 3.927
+    }
+  ]
+}

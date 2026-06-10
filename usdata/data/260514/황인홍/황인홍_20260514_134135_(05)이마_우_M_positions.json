@@ -1,0 +1,29 @@
+{
+  "source_file": "황인홍_20260514_134135_(05)이마_우_M.csv",
+  "start_point_us": 18.63,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 23.25,
+    "rel_us": 4.62,
+    "depth_mm": 3.5574,
+    "amplitude": 150.36,
+    "first_prominence": 0.0,
+    "max_prominence": 12.0,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.24,
+      "thickness_mm": 2.0097,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.0097
+    }
+  ]
+}

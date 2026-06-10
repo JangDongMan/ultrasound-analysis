@@ -1,0 +1,29 @@
+{
+  "source_file": "김희락_20260527_133725_(54)턱선목_우_M.csv",
+  "start_point_us": 20.09,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.35,
+    "rel_us": 6.26,
+    "depth_mm": 4.8202,
+    "amplitude": 25.13,
+    "first_prominence": 24.49,
+    "max_prominence": 34.11,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.34,
+      "thickness_mm": 1.7325,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7325
+    }
+  ]
+}

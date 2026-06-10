@@ -1,0 +1,37 @@
+{
+  "source_file": "박성수_20260508_152812_(26)광대뼈_우_M.csv",
+  "start_point_us": 18.88,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 27.83,
+    "rel_us": 8.95,
+    "depth_mm": 6.8915,
+    "amplitude": 48.85,
+    "first_prominence": 42.97,
+    "max_prominence": 42.97,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 20.89,
+      "thickness_mm": 1.5477,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.5477
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.84,
+      "thickness_mm": 3.8192,
+      "depth_start_mm": 1.5477,
+      "depth_end_mm": 3.8192
+    }
+  ]
+}

@@ -34,6 +34,7 @@ class ConfigManager:
         self.last_position_index: int = 0
         self.save_directory: str = ""
         self.last_port: str = ""
+        self.last_drop: int = 1850
 
     def load(self) -> bool:
         """Load all config from us_capture.config
@@ -54,6 +55,7 @@ class ConfigManager:
             self.last_position_index = data.get('last_position_index', 0)
             self.save_directory = data.get('save_directory', "")
             self.last_port = data.get('last_port', "")
+            self.last_drop = data.get('last_drop', 1850)
 
             if len(self.positions) < 4:
                 return False
@@ -70,18 +72,19 @@ class ConfigManager:
             'last_gender': self.last_gender,
             'last_position_index': self.last_position_index,
             'save_directory': self.save_directory,
-            'last_port': self.last_port
+            'last_port': self.last_port,
+            'last_drop': self.last_drop,
         }
 
         with open(self.config_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def set_positions(self, positions: List[str]):
-        """Set measurement positions (min 4, max 30)"""
+        """Set measurement positions (min 4, max 60)"""
         if len(positions) < 4:
             raise ValueError("Minimum 4 positions required")
-        if len(positions) > 30:
-            raise ValueError("Maximum 30 positions allowed")
+        if len(positions) > 60:
+            raise ValueError("Maximum 60 positions allowed")
 
         self.positions = positions
         self.save()
@@ -102,7 +105,7 @@ class ConfigManager:
 
     def update_last_used(self, patient: str = None, gender: str = None,
                          position_index: int = None, save_directory: str = None,
-                         port: str = None):
+                         port: str = None, drop: int = None):
         """Update last used settings and save"""
         if patient is not None:
             self.last_patient = patient
@@ -114,6 +117,8 @@ class ConfigManager:
             self.save_directory = save_directory
         if port is not None:
             self.last_port = port
+        if drop is not None:
+            self.last_drop = drop
         self.save()
 
     def config_exists(self) -> bool:

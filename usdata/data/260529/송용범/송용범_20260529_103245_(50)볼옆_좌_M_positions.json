@@ -1,0 +1,37 @@
+{
+  "source_file": "송용범_20260529_103245_(50)볼옆_좌_M.csv",
+  "start_point_us": 19.82,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.49,
+    "rel_us": 6.67,
+    "depth_mm": 5.1359,
+    "amplitude": 115.22,
+    "first_prominence": 112.3,
+    "max_prominence": 112.3,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.01,
+      "thickness_mm": 1.6863,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6863
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.95,
+      "thickness_mm": 3.9501,
+      "depth_start_mm": 1.6863,
+      "depth_end_mm": 3.9501
+    }
+  ]
+}

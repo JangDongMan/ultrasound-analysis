@@ -1,0 +1,29 @@
+{
+  "source_file": "황인홍_20260514_135402_(54)턱선목_우_M.csv",
+  "start_point_us": 18.64,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 24.97,
+    "rel_us": 6.33,
+    "depth_mm": 4.8741,
+    "amplitude": 52.82,
+    "first_prominence": 32.78,
+    "max_prominence": 152.41,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.06,
+      "thickness_mm": 1.8634,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8634
+    }
+  ]
+}

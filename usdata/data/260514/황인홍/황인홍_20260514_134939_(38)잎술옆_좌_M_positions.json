@@ -1,0 +1,29 @@
+{
+  "source_file": "황인홍_20260514_134939_(38)잎술옆_좌_M.csv",
+  "start_point_us": 18.59,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 23.07,
+    "rel_us": 4.48,
+    "depth_mm": 3.4496,
+    "amplitude": 97.46,
+    "first_prominence": 86.45,
+    "max_prominence": 86.45,
+    "strong": true,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 20.82,
+      "thickness_mm": 1.7171,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7171
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "source_file": "권영남_20260526_162847_(18)눈썹옆_좌_M.csv",
+  "start_point_us": 19.55,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.6,
+    "rel_us": 9.05,
+    "depth_mm": 6.9685,
+    "amplitude": 70.81,
+    "first_prominence": 69.01,
+    "max_prominence": 69.01,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.71,
+      "thickness_mm": 1.6632,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6632
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.67,
+      "thickness_mm": 3.9424,
+      "depth_start_mm": 1.6632,
+      "depth_end_mm": 3.9424
+    }
+  ]
+}

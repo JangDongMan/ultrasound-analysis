@@ -1,0 +1,29 @@
+{
+  "source_file": "김수현_20260529_165500_(17)관자놀이_좌_F.csv",
+  "start_point_us": 20.03,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.24,
+    "rel_us": 5.21,
+    "depth_mm": 4.0117,
+    "amplitude": 164.95,
+    "first_prominence": 0.0,
+    "max_prominence": 27.0,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.39,
+      "thickness_mm": 1.8172,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8172
+    }
+  ]
+}

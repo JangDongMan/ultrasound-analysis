@@ -1,0 +1,28 @@
+{
+  "source_file": "윤아영_20260528_104109_(34)잎술옆_우_F.csv",
+  "start_point_us": 19.91,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": null,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.46,
+      "thickness_mm": 1.9635,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.9635
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.23,
+      "thickness_mm": 4.0964,
+      "depth_start_mm": 1.9635,
+      "depth_end_mm": 4.0964
+    }
+  ]
+}

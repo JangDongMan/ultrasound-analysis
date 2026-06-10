@@ -1,0 +1,37 @@
+{
+  "source_file": "박성수_20260508_154834_(56)턱선목_우_M.csv",
+  "start_point_us": 18.87,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.36,
+    "rel_us": 6.49,
+    "depth_mm": 4.9973,
+    "amplitude": 24.78,
+    "first_prominence": 22.62,
+    "max_prominence": 65.23,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.13,
+      "thickness_mm": 1.7402,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7402
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.98,
+      "thickness_mm": 3.9347,
+      "depth_start_mm": 1.7402,
+      "depth_end_mm": 3.9347
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "source_file": "김희락_20260527_133019_(34)잎술옆_우_M.csv",
+  "start_point_us": 20.13,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.6,
+    "rel_us": 6.47,
+    "depth_mm": 4.9819,
+    "amplitude": 19.68,
+    "first_prominence": 19.3,
+    "max_prominence": 32.01,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.13,
+      "thickness_mm": 1.54,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.54
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.13,
+      "thickness_mm": 3.85,
+      "depth_start_mm": 1.54,
+      "depth_end_mm": 3.85
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "source_file": "윤아영_20260528_104904_(57)턱선목_중_F.csv",
+  "start_point_us": 19.88,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.07,
+    "rel_us": 6.19,
+    "depth_mm": 4.7663,
+    "amplitude": 66.9,
+    "first_prominence": 51.33,
+    "max_prominence": 140.93,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.14,
+      "thickness_mm": 1.7402,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7402
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "source_file": "박성수_20260508_150840_(11)관자놀이_우_M.csv",
+  "start_point_us": 18.91,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 24.06,
+    "rel_us": 5.15,
+    "depth_mm": 3.9655,
+    "amplitude": 140.55,
+    "first_prominence": 139.4,
+    "max_prominence": 139.4,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.02,
+      "thickness_mm": 1.6247,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6247
+    }
+  ]
+}

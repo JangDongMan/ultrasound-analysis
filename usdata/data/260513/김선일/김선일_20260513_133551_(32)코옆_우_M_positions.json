@@ -1,0 +1,37 @@
+{
+  "source_file": "김선일_20260513_133551_(32)코옆_우_M.csv",
+  "start_point_us": 18.7,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.38,
+    "rel_us": 9.68,
+    "depth_mm": 7.4536,
+    "amplitude": 63.93,
+    "first_prominence": 57.23,
+    "max_prominence": 59.46,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.15,
+      "thickness_mm": 1.8865,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8865
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.9,
+      "thickness_mm": 4.004,
+      "depth_start_mm": 1.8865,
+      "depth_end_mm": 4.004
+    }
+  ]
+}

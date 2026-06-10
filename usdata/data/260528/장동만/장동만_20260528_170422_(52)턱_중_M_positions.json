@@ -1,0 +1,29 @@
+{
+  "source_file": "장동만_20260528_170422_(52)턱_중_M.csv",
+  "start_point_us": 19.82,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.0,
+    "rel_us": 6.18,
+    "depth_mm": 4.7586,
+    "amplitude": 36.2,
+    "first_prominence": 35.63,
+    "max_prominence": 42.73,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.82,
+      "thickness_mm": 1.54,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.54
+    }
+  ]
+}

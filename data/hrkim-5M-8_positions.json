@@ -1,0 +1,27 @@
+{
+  "source_file": "hrkim-5M-8.csv",
+  "start_point_us": 18.5,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.96,
+      "thickness_mm": 2.6642,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.6642
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 32.87,
+      "thickness_mm": 8.4007,
+      "depth_start_mm": 2.6642,
+      "depth_end_mm": 11.0649
+    }
+  ]
+}

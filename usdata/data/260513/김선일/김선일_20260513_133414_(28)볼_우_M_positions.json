@@ -1,0 +1,29 @@
+{
+  "source_file": "김선일_20260513_133414_(28)볼_우_M.csv",
+  "start_point_us": 18.74,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 24.77,
+    "rel_us": 6.03,
+    "depth_mm": 4.6431,
+    "amplitude": 30.59,
+    "first_prominence": 26.98,
+    "max_prominence": 26.98,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 20.88,
+      "thickness_mm": 1.6478,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6478
+    }
+  ]
+}

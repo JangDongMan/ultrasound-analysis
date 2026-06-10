@@ -1,0 +1,28 @@
+{
+  "source_file": "박인석_20260519_161133_(42)볼_좌_M.csv",
+  "start_point_us": 18.94,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": null,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.15,
+      "thickness_mm": 1.7017,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7017
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.95,
+      "thickness_mm": 3.8577,
+      "depth_start_mm": 1.7017,
+      "depth_end_mm": 3.8577
+    }
+  ]
+}

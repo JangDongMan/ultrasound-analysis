@@ -1,0 +1,37 @@
+{
+  "source_file": "조세일_20260528_161020_(29)볼_우_M.csv",
+  "start_point_us": 19.96,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 29.29,
+    "rel_us": 9.33,
+    "depth_mm": 7.1841,
+    "amplitude": 37.84,
+    "first_prominence": 35.54,
+    "max_prominence": 36.12,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.1,
+      "thickness_mm": 1.6478,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6478
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.01,
+      "thickness_mm": 3.8885,
+      "depth_start_mm": 1.6478,
+      "depth_end_mm": 3.8885
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "source_file": "오광_20260508_171412_(59)턱선목_좌_M.csv",
+  "start_point_us": 18.96,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.65,
+    "rel_us": 6.69,
+    "depth_mm": 5.1513,
+    "amplitude": 69.32,
+    "first_prominence": 68.32,
+    "max_prominence": 75.11,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.07,
+      "thickness_mm": 1.6247,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6247
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.07,
+      "thickness_mm": 3.9347,
+      "depth_start_mm": 1.6247,
+      "depth_end_mm": 3.9347
+    }
+  ]
+}

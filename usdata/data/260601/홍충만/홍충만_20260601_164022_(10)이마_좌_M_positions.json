@@ -1,0 +1,29 @@
+{
+  "source_file": "홍충만_20260601_164022_(10)이마_좌_M.csv",
+  "start_point_us": 20.16,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.07,
+    "rel_us": 5.91,
+    "depth_mm": 4.5507,
+    "amplitude": 148.95,
+    "first_prominence": 0.0,
+    "max_prominence": 10.0,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.23,
+      "thickness_mm": 1.5939,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.5939
+    }
+  ]
+}

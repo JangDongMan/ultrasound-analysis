@@ -1,0 +1,27 @@
+{
+  "source_file": "ysseo-5M-4.csv",
+  "start_point_us": 18.5,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.43,
+      "thickness_mm": 2.2561,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.2561
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 31.24,
+      "thickness_mm": 7.5537,
+      "depth_start_mm": 2.2561,
+      "depth_end_mm": 9.8098
+    }
+  ]
+}

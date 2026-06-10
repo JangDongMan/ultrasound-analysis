@@ -1,0 +1,29 @@
+{
+  "source_file": "서영수_20260527_165533_(11)관자놀이_우_M.csv",
+  "start_point_us": 19.81,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.83,
+    "rel_us": 6.02,
+    "depth_mm": 4.6354,
+    "amplitude": 155.12,
+    "first_prominence": 151.06,
+    "max_prominence": 159.36,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.11,
+      "thickness_mm": 1.771,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.771
+    }
+  ]
+}

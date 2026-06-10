@@ -50,8 +50,8 @@ from config import ConfigManager
 
 
 # Data trimming
-DEFAULT_DROP = 1200     # Default drop count (12.00 μs at 10ns interval)
-TRIM_COUNT = 1250       # Keep samples (~10mm at 1540 m/s)
+DEFAULT_DROP = 1850     # Default drop count (18.50 μs at 10ns interval)
+TRIM_COUNT = 2050       # Keep samples: drop(1850)~sample(3900)
 
 # CustomTkinter settings
 ctk.set_appearance_mode("dark")
@@ -90,7 +90,7 @@ class PositionSetupDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Enter Measurement Positions",
                      font=ctk.CTkFont(size=16, weight="bold")).pack(pady=15)
 
-        ctk.CTkLabel(self, text="(Minimum 4, Maximum 30 positions)").pack(pady=5)
+        ctk.CTkLabel(self, text="(Minimum 4, Maximum 60 positions)").pack(pady=5)
 
         # Text area for positions
         self.text_frame = ctk.CTkFrame(self)
@@ -103,12 +103,7 @@ class PositionSetupDialog(ctk.CTkToplevel):
         if self.positions:
             self.textbox.insert("1.0", "\n".join(self.positions))
         else:
-            default = [
-                "Forehead-1", "Forehead-2",
-                "Cheek-L", "Cheek-R",
-                "Chin", "Nose",
-                "Neck-L", "Neck-R"
-            ]
+            default = [f"얼굴{i}" for i in range(1, 61)]
             self.textbox.insert("1.0", "\n".join(default))
 
         # Info label
@@ -124,6 +119,9 @@ class PositionSetupDialog(ctk.CTkToplevel):
                       command=self._on_ok).pack(side="right", padx=5)
         ctk.CTkButton(btn_frame, text="Cancel", width=100,
                       fg_color="gray", command=self._on_cancel).pack(side="right", padx=5)
+        ctk.CTkButton(btn_frame, text="기본 60개 로드", width=120,
+                      fg_color="#6f42c1", hover_color="#5a32a3",
+                      command=self._load_default_60).pack(side="left", padx=5)
 
     def _on_ok(self):
         text = self.textbox.get("1.0", "end-1c")
@@ -132,12 +130,17 @@ class PositionSetupDialog(ctk.CTkToplevel):
         if len(positions) < 4:
             messagebox.showerror("Error", "Minimum 4 positions required")
             return
-        if len(positions) > 30:
-            messagebox.showerror("Error", "Maximum 30 positions allowed")
+        if len(positions) > 60:
+            messagebox.showerror("Error", "Maximum 60 positions allowed")
             return
 
         self.result = positions
         self.destroy()
+
+    def _load_default_60(self):
+        self.textbox.delete("1.0", "end")
+        default = "\n".join(f"얼굴{i}" for i in range(1, 61))
+        self.textbox.insert("1.0", default)
 
     def _on_cancel(self):
         self.result = None
@@ -331,14 +334,15 @@ class ADCCaptureGUI(ctk.CTk):
         ctk.CTkLabel(cap_frame, text="Command:").grid(row=0, column=1, padx=5, pady=10)
         self.cmd_entry = ctk.CTkComboBox(
             cap_frame, width=160,
-            values=["pwm start 5 1", "pwm start ulso"],
+            values=["pwm start ulso"],
             state="normal")
-        self.cmd_entry.set("pwm start 5 1")
+        self.cmd_entry.set("pwm start ulso")
         self.cmd_entry.grid(row=0, column=2, padx=5, pady=10)
 
         ctk.CTkLabel(cap_frame, text="Drop:").grid(row=0, column=3, padx=5, pady=10)
         self.drop_entry = ctk.CTkEntry(cap_frame, width=70)
-        self.drop_entry.insert(0, str(DEFAULT_DROP))
+        _init_drop = self.config.last_drop if self.config.last_drop is not None else DEFAULT_DROP
+        self.drop_entry.insert(0, str(_init_drop))
         self.drop_entry.grid(row=0, column=4, padx=5, pady=10)
 
         ctk.CTkLabel(cap_frame, text="Timeout:").grid(row=0, column=5, padx=5, pady=10)
@@ -547,14 +551,16 @@ class ADCCaptureGUI(ctk.CTk):
         """Update filename preview"""
         patient = self.patient_entry.get().strip() or "unknown"
         gender = self.gender_var.get()
+        pos_idx = self.current_position_index + 1
         position = self.config.get_position(self.current_position_index) or "pos"
+        pos_str = f"({pos_idx:02d}){position}"
 
         # Show folder and filename pattern
         if self.config.save_directory:
             folder = os.path.basename(self.config.save_directory)
-            self.filename_label.configure(text=f"[{folder}] {patient}_{position}_{gender}.csv")
+            self.filename_label.configure(text=f"[{folder}] {patient}_{pos_str}_{gender}.csv")
         else:
-            self.filename_label.configure(text=f"[No Folder] {patient}_{position}_{gender}.csv")
+            self.filename_label.configure(text=f"[No Folder] {patient}_{pos_str}_{gender}.csv")
 
     def _refresh_ports(self):
         """Refresh serial port list and restore last used port"""
@@ -645,8 +651,11 @@ class ADCCaptureGUI(ctk.CTk):
             self.send_btn.configure(state="normal")
             return
 
-        # Capture: drop + keep
-        capture_samples = self.drop_samples + TRIM_COUNT
+        # Drop 값 config에 저장 (다음 시작 시 복원)
+        self.config.update_last_used(drop=self.drop_samples)
+
+        # Capture: drop=0 이면 전체 수신 (None → 장치가 보내는 모든 샘플)
+        capture_samples = None if self.drop_samples == 0 else self.drop_samples + TRIM_COUNT
 
         thread = threading.Thread(target=self._capture_thread,
                                    args=(cmd, capture_samples, timeout), daemon=True)
@@ -679,9 +688,13 @@ class ADCCaptureGUI(ctk.CTk):
 
                 if msg[0] == 'progress':
                     count, total = msg[1], msg[2]
-                    progress = count / total if total > 0 else 0
+                    if total:
+                        progress = count / total
+                        self.progress_label.configure(text=f"Capturing... {count}/{total}")
+                    else:
+                        progress = 0
+                        self.progress_label.configure(text=f"Capturing... {count} samples")
                     self.progress_bar.set(progress)
-                    self.progress_label.configure(text=f"Capturing... {count}/{total}")
 
                 elif msg[0] == 'log':
                     log_text, cmd, num_samples, adc_values = msg[1], msg[2], msg[3], msg[4]
@@ -709,9 +722,13 @@ class ADCCaptureGUI(ctk.CTk):
 
     def _trim_data(self, time_ns, adc_values, drop=None):
         """Trim data: discard first 'drop' samples, keep TRIM_COUNT, discard rest.
+        drop=0 이면 트리밍 없이 전체 데이터 반환.
         Returns new (time_ns, adc_values) starting from index 0."""
         if drop is None:
             drop = self.drop_samples
+        if drop == 0:
+            new_time_ns = np.arange(len(adc_values)) * 10
+            return new_time_ns, adc_values
         end = drop + TRIM_COUNT
         if len(adc_values) >= end:
             trimmed = adc_values[drop:end]
@@ -800,14 +817,15 @@ class ADCCaptureGUI(ctk.CTk):
                            linewidth=0.6, alpha=0.5, label="Previous")
 
         if self.show_raw and len(self.raw_adc_values) > 0:
-            # Raw mode: show full untrimed data with drop region highlighted
+            # Raw mode: show full untrimmed data with drop region highlighted
             raw_time_us = np.arange(len(self.raw_adc_values)) * 0.01  # 10ns/sample → μs
             drop_n = self.drop_samples
-            keep_end = drop_n + TRIM_COUNT
+            # drop=0 이면 전체를 Keep으로 표시 (Tail 없음)
+            keep_end = len(self.raw_adc_values) if drop_n == 0 else drop_n + TRIM_COUNT
 
             if show_envelope:
                 raw_env = self._compute_envelope(self.raw_adc_values)
-                # Drop region (red/dim)
+                # Drop region (red/dim) — drop=0 이면 생략
                 if drop_n > 0:
                     self.ax.plot(raw_time_us[:drop_n], raw_env[:drop_n],
                                  color='#ff4444', linewidth=0.7, alpha=0.6, label=f"Drop({drop_n})")
@@ -815,8 +833,8 @@ class ADCCaptureGUI(ctk.CTk):
                 end = min(keep_end, len(self.raw_adc_values))
                 self.ax.plot(raw_time_us[drop_n:end], raw_env[drop_n:end],
                              color='#00ff88', linewidth=0.8, label=f"Keep({end - drop_n})")
-                # Extra region beyond keep
-                if len(self.raw_adc_values) > end:
+                # Tail region — drop=0 이면 생략
+                if drop_n > 0 and len(self.raw_adc_values) > end:
                     self.ax.plot(raw_time_us[end:], raw_env[end:],
                                  color='#aaaaaa', linewidth=0.6, alpha=0.5, label="Tail")
                 self.ax.set_ylabel("Envelope", color=text_color)
@@ -827,14 +845,16 @@ class ADCCaptureGUI(ctk.CTk):
                 end = min(keep_end, len(self.raw_adc_values))
                 self.ax.plot(raw_time_us[drop_n:end], self.raw_adc_values[drop_n:end],
                              color='#00bfff', linewidth=0.8, label=f"Keep({end - drop_n})")
-                if len(self.raw_adc_values) > end:
+                if drop_n > 0 and len(self.raw_adc_values) > end:
                     self.ax.plot(raw_time_us[end:], self.raw_adc_values[end:],
                                  color='#aaaaaa', linewidth=0.6, alpha=0.5, label="Tail")
                 self.ax.set_ylabel("ADC Value", color=text_color)
 
             self.ax.set_title(f"RAW DATA — total {len(self.raw_adc_values)} samples", color='#ffaa00')
-            self.ax.axvline(x=raw_time_us[drop_n] if drop_n < len(raw_time_us) else 0,
-                            color='yellow', linewidth=1, linestyle='--', alpha=0.7)
+            # drop=0 이면 구분선 없음
+            if drop_n > 0 and drop_n < len(raw_time_us):
+                self.ax.axvline(x=raw_time_us[drop_n], color='yellow',
+                                linewidth=1, linestyle='--', alpha=0.7)
             self.ax.legend(loc='upper right', fontsize=9,
                            facecolor=bg_color, edgecolor=grid_color, labelcolor=text_color)
             self.ax.xaxis.set_major_locator(MultipleLocator(1.0))
@@ -886,8 +906,8 @@ class ADCCaptureGUI(ctk.CTk):
 
         else:
             # Default view when no data
-            self.ax.set_xlim(offset_us,
-                            offset_us + (TRIM_COUNT - 1) * 0.01)
+            x_span = (TRIM_COUNT - 1) * 0.01 if self.drop_samples > 0 else 12.5
+            self.ax.set_xlim(offset_us, offset_us + x_span)
             self.ax.set_ylim(0, 256)
             if show_envelope:
                 self.ax.set_ylabel("Envelope", color=text_color)
@@ -1010,10 +1030,11 @@ class ADCCaptureGUI(ctk.CTk):
         # Generate filename
         patient = self.patient_entry.get().strip() or "unknown"
         gender = self.gender_var.get()
+        pos_idx = self.current_position_index + 1
         position = self.config.get_position(self.current_position_index) or "pos"
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        filename = f"{patient}_{timestamp}_{position}_{gender}.csv"
+        filename = f"{patient}_{timestamp}_({pos_idx:02d}){position}_{gender}.csv"
         filepath = os.path.join(self.config.save_directory, filename)
 
         # Update last used settings

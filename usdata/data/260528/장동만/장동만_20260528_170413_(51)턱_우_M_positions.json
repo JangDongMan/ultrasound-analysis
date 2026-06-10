@@ -1,0 +1,37 @@
+{
+  "source_file": "장동만_20260528_170413_(51)턱_우_M.csv",
+  "start_point_us": 19.87,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 29.82,
+    "rel_us": 9.95,
+    "depth_mm": 7.6615,
+    "amplitude": 40.58,
+    "first_prominence": 36.4,
+    "max_prominence": 36.4,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.24,
+      "thickness_mm": 1.8249,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8249
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.02,
+      "thickness_mm": 3.9655,
+      "depth_start_mm": 1.8249,
+      "depth_end_mm": 3.9655
+    }
+  ]
+}

@@ -1,2 +1,8 @@
 __pycache__/
-*.pycutils2/__pycache__/
+*.pyc
+utils2/__pycache__/
+.venv/
+.venv*/
+.claude/
+.ipynb_checkpoints/
+data/.ipynb_checkpoints/

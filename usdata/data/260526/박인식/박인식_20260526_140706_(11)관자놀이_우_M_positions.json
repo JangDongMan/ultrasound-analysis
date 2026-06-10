@@ -1,0 +1,29 @@
+{
+  "source_file": "박인식_20260526_140706_(11)관자놀이_우_M.csv",
+  "start_point_us": 19.59,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.0,
+    "rel_us": 6.41,
+    "depth_mm": 4.9357,
+    "amplitude": 76.76,
+    "first_prominence": 58.07,
+    "max_prominence": 98.21,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.06,
+      "thickness_mm": 1.9019,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.9019
+    }
+  ]
+}

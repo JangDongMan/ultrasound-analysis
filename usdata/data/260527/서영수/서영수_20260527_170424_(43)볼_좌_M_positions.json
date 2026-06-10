@@ -1,0 +1,29 @@
+{
+  "source_file": "서영수_20260527_170424_(43)볼_좌_M.csv",
+  "start_point_us": 19.97,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.0,
+    "rel_us": 6.03,
+    "depth_mm": 4.6431,
+    "amplitude": 24.04,
+    "first_prominence": 15.82,
+    "max_prominence": 44.36,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.27,
+      "thickness_mm": 1.771,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.771
+    }
+  ]
+}

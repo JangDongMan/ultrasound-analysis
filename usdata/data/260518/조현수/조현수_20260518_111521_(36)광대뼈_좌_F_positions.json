@@ -1,0 +1,29 @@
+{
+  "source_file": "조현수_20260518_111521_(36)광대뼈_좌_F.csv",
+  "start_point_us": 18.8,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.44,
+    "rel_us": 6.64,
+    "depth_mm": 5.1128,
+    "amplitude": 59.7,
+    "first_prominence": 39.86,
+    "max_prominence": 39.86,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.43,
+      "thickness_mm": 2.0251,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.0251
+    }
+  ]
+}

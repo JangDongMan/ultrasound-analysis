@@ -1,0 +1,37 @@
+{
+  "source_file": "김수현_20260529_165607_(23)볼옆_우_F.csv",
+  "start_point_us": 20.08,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 30.63,
+    "rel_us": 10.55,
+    "depth_mm": 8.1235,
+    "amplitude": 50.0,
+    "first_prominence": 45.83,
+    "max_prominence": 45.83,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.39,
+      "thickness_mm": 1.7787,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7787
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.2,
+      "thickness_mm": 3.9424,
+      "depth_start_mm": 1.7787,
+      "depth_end_mm": 3.9424
+    }
+  ]
+}

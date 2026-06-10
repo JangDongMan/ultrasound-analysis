@@ -1,0 +1,29 @@
+{
+  "source_file": "양창식_20260518_164814_(14)눈썹옆_우_M.csv",
+  "start_point_us": 18.71,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.19,
+    "rel_us": 6.48,
+    "depth_mm": 4.9896,
+    "amplitude": 136.67,
+    "first_prominence": 134.06,
+    "max_prominence": 151.87,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.23,
+      "thickness_mm": 1.9404,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.9404
+    }
+  ]
+}

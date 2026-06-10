@@ -1,0 +1,37 @@
+{
+  "source_file": "정병훈_20260520_104923_(41)광대뼈_좌_M.csv",
+  "start_point_us": 19.57,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 29.05,
+    "rel_us": 9.48,
+    "depth_mm": 7.2996,
+    "amplitude": 101.67,
+    "first_prominence": 90.53,
+    "max_prominence": 90.53,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.76,
+      "thickness_mm": 1.6863,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6863
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.61,
+      "thickness_mm": 3.8808,
+      "depth_start_mm": 1.6863,
+      "depth_end_mm": 3.8808
+    }
+  ]
+}

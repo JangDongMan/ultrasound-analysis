@@ -1,0 +1,37 @@
+{
+  "source_file": "윤아영_20260528_104923_(59)턱선목_좌_F.csv",
+  "start_point_us": 19.9,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 27.45,
+    "rel_us": 7.55,
+    "depth_mm": 5.8135,
+    "amplitude": 32.78,
+    "first_prominence": 31.51,
+    "max_prominence": 55.73,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.98,
+      "thickness_mm": 1.6016,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6016
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.93,
+      "thickness_mm": 3.8731,
+      "depth_start_mm": 1.6016,
+      "depth_end_mm": 3.8731
+    }
+  ]
+}

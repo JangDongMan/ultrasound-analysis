@@ -1,0 +1,29 @@
+{
+  "source_file": "윤아영_20260528_103529_(08)이마_좌_F.csv",
+  "start_point_us": 19.78,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.87,
+    "rel_us": 6.09,
+    "depth_mm": 4.6893,
+    "amplitude": 108.88,
+    "first_prominence": 40.63,
+    "max_prominence": 161.19,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.85,
+      "thickness_mm": 1.5939,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.5939
+    }
+  ]
+}

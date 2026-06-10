@@ -1,0 +1,37 @@
+{
+  "source_file": "송인광_20260602_134302_(51)턱_우_M.csv",
+  "start_point_us": 19.93,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 30.87,
+    "rel_us": 10.94,
+    "depth_mm": 8.4238,
+    "amplitude": 101.41,
+    "first_prominence": 94.71,
+    "max_prominence": 94.71,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.33,
+      "thickness_mm": 1.848,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.848
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.09,
+      "thickness_mm": 3.9732,
+      "depth_start_mm": 1.848,
+      "depth_end_mm": 3.9732
+    }
+  ]
+}

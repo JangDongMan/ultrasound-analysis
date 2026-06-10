@@ -1,0 +1,37 @@
+{
+  "source_file": "양창식_20260518_164612_(08)이마_좌_M.csv",
+  "start_point_us": 18.88,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.1,
+    "rel_us": 9.22,
+    "depth_mm": 7.0994,
+    "amplitude": 99.11,
+    "first_prominence": 89.36,
+    "max_prominence": 89.36,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 20.88,
+      "thickness_mm": 1.54,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.54
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.88,
+      "thickness_mm": 3.85,
+      "depth_start_mm": 1.54,
+      "depth_end_mm": 3.85
+    }
+  ]
+}

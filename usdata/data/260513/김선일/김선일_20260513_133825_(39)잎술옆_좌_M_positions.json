@@ -1,0 +1,29 @@
+{
+  "source_file": "김선일_20260513_133825_(39)잎술옆_좌_M.csv",
+  "start_point_us": 18.74,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.05,
+    "rel_us": 6.31,
+    "depth_mm": 4.8587,
+    "amplitude": 28.69,
+    "first_prominence": 27.68,
+    "max_prominence": 27.68,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.24,
+      "thickness_mm": 1.925,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.925
+    }
+  ]
+}

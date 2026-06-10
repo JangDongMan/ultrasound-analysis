@@ -1,0 +1,37 @@
+{
+  "source_file": "홍충만_20260601_164552_(39)잎술옆_좌_M.csv",
+  "start_point_us": 20.12,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.35,
+    "rel_us": 8.23,
+    "depth_mm": 6.3371,
+    "amplitude": 16.96,
+    "first_prominence": 15.03,
+    "max_prominence": 22.71,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.16,
+      "thickness_mm": 1.5708,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.5708
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.09,
+      "thickness_mm": 3.8269,
+      "depth_start_mm": 1.5708,
+      "depth_end_mm": 3.8269
+    }
+  ]
+}

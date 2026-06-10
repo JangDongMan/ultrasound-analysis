@@ -1,0 +1,37 @@
+{
+  "source_file": "박성수_20260508_150648_(06)이마_중_M.csv",
+  "start_point_us": 18.93,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 27.61,
+    "rel_us": 8.68,
+    "depth_mm": 6.6836,
+    "amplitude": 163.36,
+    "first_prominence": 158.35,
+    "max_prominence": 158.35,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.01,
+      "thickness_mm": 1.6016,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.6016
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.03,
+      "thickness_mm": 3.927,
+      "depth_start_mm": 1.6016,
+      "depth_end_mm": 3.927
+    }
+  ]
+}

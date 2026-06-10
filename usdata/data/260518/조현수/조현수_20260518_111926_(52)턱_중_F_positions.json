@@ -1,0 +1,37 @@
+{
+  "source_file": "조현수_20260518_111926_(52)턱_중_F.csv",
+  "start_point_us": 18.74,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.95,
+    "rel_us": 8.21,
+    "depth_mm": 6.3217,
+    "amplitude": 87.85,
+    "first_prominence": 86.78,
+    "max_prominence": 86.78,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 20.99,
+      "thickness_mm": 1.7325,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.7325
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 23.82,
+      "thickness_mm": 3.9116,
+      "depth_start_mm": 1.7325,
+      "depth_end_mm": 3.9116
+    }
+  ]
+}

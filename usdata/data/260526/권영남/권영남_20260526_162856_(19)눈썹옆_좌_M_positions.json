@@ -1,0 +1,29 @@
+{
+  "source_file": "권영남_20260526_162856_(19)눈썹옆_좌_M.csv",
+  "start_point_us": 19.53,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.52,
+    "rel_us": 5.99,
+    "depth_mm": 4.6123,
+    "amplitude": 141.37,
+    "first_prominence": 116.49,
+    "max_prominence": 116.49,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.13,
+      "thickness_mm": 2.002,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 2.002
+    }
+  ]
+}

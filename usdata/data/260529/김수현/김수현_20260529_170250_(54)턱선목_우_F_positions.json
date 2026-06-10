@@ -1,0 +1,29 @@
+{
+  "source_file": "김수현_20260529_170250_(54)턱선목_우_F.csv",
+  "start_point_us": 20.15,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.49,
+    "rel_us": 6.34,
+    "depth_mm": 4.8818,
+    "amplitude": 17.58,
+    "first_prominence": 16.69,
+    "max_prominence": 19.0,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.49,
+      "thickness_mm": 1.8018,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8018
+    }
+  ]
+}

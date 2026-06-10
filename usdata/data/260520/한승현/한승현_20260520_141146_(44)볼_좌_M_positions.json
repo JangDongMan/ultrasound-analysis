@@ -1,0 +1,37 @@
+{
+  "source_file": "한승현_20260520_141146_(44)볼_좌_M.csv",
+  "start_point_us": 19.88,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 28.65,
+    "rel_us": 8.77,
+    "depth_mm": 6.7529,
+    "amplitude": 22.57,
+    "first_prominence": 18.28,
+    "max_prominence": 34.23,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.26,
+      "thickness_mm": 1.8326,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8326
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 25.05,
+      "thickness_mm": 3.9809,
+      "depth_start_mm": 1.8326,
+      "depth_end_mm": 3.9809
+    }
+  ]
+}

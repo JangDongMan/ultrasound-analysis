@@ -1,0 +1,29 @@
+{
+  "source_file": "오광_20260508_171209_(54)턱선목_우_M.csv",
+  "start_point_us": 19.1,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 24.69,
+    "rel_us": 5.59,
+    "depth_mm": 4.3043,
+    "amplitude": 152.85,
+    "first_prominence": 0.0,
+    "max_prominence": 16.0,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.52,
+      "thickness_mm": 1.8634,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8634
+    }
+  ]
+}

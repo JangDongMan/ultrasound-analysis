@@ -1,0 +1,37 @@
+{
+  "source_file": "양창식_20260518_165010_(16)관자놀이_좌_M.csv",
+  "start_point_us": 18.86,
+  "num_positions": 2,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 25.58,
+    "rel_us": 6.72,
+    "depth_mm": 5.1744,
+    "amplitude": 88.58,
+    "first_prominence": 85.54,
+    "max_prominence": 85.54,
+    "strong": true,
+    "used_as_reference": true
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 21.4,
+      "thickness_mm": 1.9558,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.9558
+    },
+    {
+      "position_number": 2,
+      "position_name": "Fascia",
+      "time_us": 24.14,
+      "thickness_mm": 4.0656,
+      "depth_start_mm": 1.9558,
+      "depth_end_mm": 4.0656
+    }
+  ]
+}

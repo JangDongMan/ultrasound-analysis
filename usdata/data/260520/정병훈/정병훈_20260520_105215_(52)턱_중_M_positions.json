@@ -1,0 +1,29 @@
+{
+  "source_file": "정병훈_20260520_105215_(52)턱_중_M.csv",
+  "start_point_us": 19.93,
+  "num_positions": 1,
+  "speed_of_sound": 1540.0,
+  "sample_interval_ns": 10,
+  "num_samples": 2050,
+  "auto_marked": true,
+  "bone_echo": {
+    "time_us": 26.33,
+    "rel_us": 6.4,
+    "depth_mm": 4.928,
+    "amplitude": 23.61,
+    "first_prominence": 17.21,
+    "max_prominence": 39.12,
+    "strong": false,
+    "used_as_reference": false
+  },
+  "positions": [
+    {
+      "position_number": 1,
+      "position_name": "피하지방시작",
+      "time_us": 22.28,
+      "thickness_mm": 1.8095,
+      "depth_start_mm": 0.0,
+      "depth_end_mm": 1.8095
+    }
+  ]
+}
